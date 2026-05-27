@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -27,6 +28,26 @@ export default function Lightbox({
 }: LightboxProps) {
   const item = items[currentIndex];
 
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      switch (e.key) {
+        case "Escape":
+          onClose();
+          break;
+        case "ArrowLeft":
+          onPrev();
+          break;
+        case "ArrowRight":
+          onNext();
+          break;
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, onNext, onPrev]);
+
   const handleDragEnd = (
     _: unknown,
     info: { offset: { x: number }; velocity: { x: number } }
@@ -48,6 +69,9 @@ export default function Lightbox({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Lightbox: ${item.title}`}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={onClose}
         >

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { createSessionToken } from "@/lib/session";
 
 export async function POST(request: Request) {
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;
@@ -42,8 +43,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Set session cookie
-    const sessionToken = crypto.randomUUID();
+    // Create a signed session token
+    const secret = process.env.SESSION_SECRET || "default-dev-secret";
+    const sessionToken = await createSessionToken(secret);
+
     const cookieStore = await cookies();
     cookieStore.set("admin_session", sessionToken, {
       httpOnly: true,

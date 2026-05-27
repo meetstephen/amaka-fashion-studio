@@ -73,13 +73,13 @@ export default function Navbar() {
             isOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="pb-6 space-y-4">
+          <div className="pb-6 space-y-4 bg-black/95 backdrop-blur-md rounded-xl px-4 pt-4 mt-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="block text-cream hover:text-gold transition-colors duration-200 text-sm uppercase tracking-widest font-medium py-3"
+                className="block text-gold hover:text-cream transition-colors duration-200 text-sm uppercase tracking-widest font-medium py-3 border-b border-gold/20 last:border-b-0"
               >
                 {link.label}
               </Link>
