@@ -67,7 +67,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 rounded-full border border-cream/20 bg-cream/5 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.32em] text-cream/80 backdrop-blur"
             >
               <Sparkles size={12} className="text-gold" />
-              Luxury Menswear from Abakaliki
+              Where Heritage Meets Distinction
             </motion.div>
 
             <motion.h1
@@ -130,6 +130,51 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Featured Hero Image Section */}
+      {/* TODO: Make this admin-editable via Supabase - featured image, overlay text, and CTA link */}
+      <section className="relative bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="relative aspect-[16/9] w-full overflow-hidden"
+          >
+            {/* Gradient placeholder for featured image */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald via-emerald-dark to-black" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+            {/* Overlay content */}
+            <div className="absolute inset-0 flex items-end justify-start p-8 md:p-16">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+              >
+                <p className="text-xs uppercase tracking-[0.3em] text-gold font-medium">
+                  Featured
+                </p>
+                <h2 className="font-heading text-3xl md:text-5xl font-bold text-cream mt-3">
+                  The New Season Collection
+                </h2>
+                <p className="mt-3 max-w-lg text-cream/70 text-sm md:text-base leading-relaxed">
+                  Discover our latest designs blending Nigerian heritage with
+                  contemporary silhouettes, crafted for the modern gentleman.
+                </p>
+                <Link
+                  href="/collections"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-medium uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+                >
+                  Shop Now <ArrowRight size={14} />
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
 

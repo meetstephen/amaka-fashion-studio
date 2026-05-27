@@ -85,3 +85,49 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #D4AF37;
   color: #0A0A0A;
 }
+
+/* Focus-visible ring for interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #D4AF37;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Minimum touch target for interactive elements on mobile */
+@media (pointer: coarse) {
+  a,
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+  }
+}
+
+/* Touch interaction optimization */
+a,
+button,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Accessibility: Focus states for all interactive elements */
+:focus-visible {
+  outline: 2px solid #D4AF37;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove default focus outline to avoid double rings */
+:focus:not(:focus-visible) {
+  outline: none;
+}

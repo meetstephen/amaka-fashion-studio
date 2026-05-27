@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 
 type Category =
@@ -170,6 +171,7 @@ export default function CollectionsPage() {
 
   return (
     <section className="pt-28 pb-20 md:pt-36 md:pb-32 bg-cream min-h-screen">
+      <BackButton />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-3xl text-center">
