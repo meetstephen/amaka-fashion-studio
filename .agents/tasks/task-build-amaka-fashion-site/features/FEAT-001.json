@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Scaffold the Next.js 14 project with Tailwind CSS, TypeScript, and the luxury brand design system. Create the full application shell including layout, navigation, footer, and all page routes.",
+  "status": "in_progress",
+  "steps": [
+    "Initialize a Next.js 14 project with App Router, TypeScript, Tailwind CSS, and ESLint using pnpm in /projects/sandbox/amaka-fashion-studio. Use `pnpm create next-app@latest . --typescript --tailwind --eslint --app --src-dir --no-import-alias`",
+    "Configure tailwind.config.ts with the luxury brand color palette: emerald (#006B3F), gold (#D4AF37), black (#0A0A0A), cream (#FDF8F0). Add custom fonts (Playfair Display for headings, Inter or Lato for body). Extend the theme with luxury animations (fade-in, slide-up, shimmer).",
+    "Install additional dependencies: framer-motion for animations, lucide-react for icons, next-themes for potential dark mode.",
+    "Create src/app/layout.tsx with Google Fonts integration (Playfair Display + Inter), metadata for SEO (title: Amaka Fashion Atelier, description with tagline), and the global layout structure.",
+    "Create src/app/globals.css with Tailwind directives, custom CSS variables for the brand colors, luxury typography classes, custom scrollbar styling, and smooth scroll behavior.",
+    "Create src/components/Navbar.tsx - a responsive luxury navigation bar with: brand logo/name 'Amaka Fashion Atelier', mobile hamburger menu with smooth animations, navigation links (Home, Collections, About, Contact), emerald/gold color scheme, sticky positioning with backdrop blur on scroll.",
+    "Create src/components/Footer.tsx - a luxury footer with: brand name and tagline 'Crafting the Modern Nigerian Gentleman', location (Abakaliki, Nigeria), WhatsApp contact link (+234 913 127 2407), social media placeholders, copyright notice, elegant gold accent lines.",
+    "Create src/app/page.tsx (Home page) with: a full-screen hero section with luxury background and tagline overlay, featured collections grid showing the 6 categories (Senator Wear, Shirts, Suits, Casual, Traditional, Corporate) with hover effects, a brand story teaser section, call-to-action buttons linking to WhatsApp and collections.",
+    "Create src/app/collections/page.tsx - a gallery/lookbook page with: category filter buttons for all 6 clothing types, responsive grid of collection cards with elegant hover animations, each card showing category name and description with luxury styling, placeholder images using gradient backgrounds with gold accents.",
+    "Create src/app/about/page.tsx - brand story page with: the Amaka Fashion Atelier story emphasizing Nigerian heritage and modern luxury, brand values section, the craftsmanship philosophy, location prominence (Abakaliki), elegant typography and layout.",
+    "Create src/app/contact/page.tsx - contact page with: WhatsApp integration as primary contact (+234 913 127 2407), location details (Abakaliki, Nigeria), a contact form (name, email, message) with luxury styling, business hours, elegant map placeholder or location card."
+  ],
+  "acceptance_criteria": [
+    "Running `pnpm build` completes without errors",
+    "All pages (/, /collections, /about, /contact) render with the luxury emerald/gold/black/cream color scheme",
+    "Navigation is responsive with mobile hamburger menu",
+    "Footer displays brand info, location, and WhatsApp contact",
+    "Home page has hero section and collections grid",
+    "Typography uses Playfair Display for headings and Inter for body text"
+  ],
+  "verification": [
+    "cd /projects/sandbox/amaka-fashion-studio && pnpm build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

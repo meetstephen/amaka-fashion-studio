@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add the Dapper AI chatbot component, WhatsApp floating button, luxury animations with Framer Motion, and final polish for production readiness.",
+  "status": "pending",
+  "steps": [
+    "Create src/components/ChatBot.tsx - the 'Dapper' AI fashion assistant chatbot with: a floating chat button (bottom-right, above WhatsApp button) styled with emerald/gold, expandable chat window with luxury design, bot avatar and name 'Dapper', pre-programmed fashion responses for common queries (greetings, asking about Senator Wear, suits, measurements, appointments, pricing, styling advice), typing animation indicator, message history display with user/bot differentiation, smooth open/close animations. The bot should respond intelligently to keywords like 'senator', 'suit', 'shirt', 'traditional', 'appointment', 'size', 'price', 'style', 'hello', 'help'. Include at least 15-20 varied responses covering the clothing categories.",
+    "Create src/components/WhatsAppButton.tsx - a floating WhatsApp button with: fixed position (bottom-right corner), WhatsApp green with gold border accent, click opens WhatsApp chat with pre-filled message to +234 913 127 2407 (use https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier), pulse animation to draw attention, tooltip on hover showing 'Chat with us on WhatsApp'.",
+    "Add Framer Motion animations throughout the site: fade-in on scroll for sections (use intersection observer pattern), staggered animations for grid items on the collections page, smooth page transitions, hover scale effects on cards and buttons, hero text reveal animation on home page. Create a src/lib/animations.ts file with reusable animation variants.",
+    "Add luxury micro-interactions: button hover states with gold shimmer effect, card hover with subtle lift and shadow, navigation link underline animations, smooth scroll between sections, loading shimmer for placeholder images.",
+    "Integrate ChatBot and WhatsAppButton into the root layout (src/app/layout.tsx) so they appear on all pages.",
+    "Final polish: ensure all text content is compelling luxury copywriting appropriate for a high-end Nigerian menswear brand, verify responsive design works at mobile (375px), tablet (768px), and desktop (1280px) breakpoints, add proper aria labels and semantic HTML for accessibility, add meta tags and Open Graph data for social sharing."
+  ],
+  "acceptance_criteria": [
+    "Running `pnpm build` completes without errors",
+    "Dapper chatbot opens/closes smoothly and responds to at least 10 different keyword-based queries",
+    "WhatsApp button is visible on all pages and links to the correct WhatsApp number",
+    "Framer Motion animations are present on scroll and hover interactions",
+    "Site is fully responsive at mobile, tablet, and desktop breakpoints",
+    "All pages have luxury copywriting appropriate for the Amaka Fashion Atelier brand"
+  ],
+  "verification": [
+    "cd /projects/sandbox/amaka-fashion-studio && pnpm build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

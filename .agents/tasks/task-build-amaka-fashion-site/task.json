@@ -1,0 +1,7 @@
+{
+  "task_id": "task-build-amaka-fashion-site",
+  "task_description": "Build a complete luxury menswear website for Amaka Fashion Atelier from scratch. The site features a mobile-first responsive design with emerald green, gold, black, and cream color scheme. It includes Home, Collections, About, and Contact pages, a Dapper AI chatbot, WhatsApp integration, and luxury animations. Built with Next.js 14, TypeScript, and Tailwind CSS.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

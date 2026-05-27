@@ -1,0 +1,28 @@
+{
+  "project_type": "Next.js 14 luxury menswear website with App Router",
+  "language": "TypeScript",
+  "build_system": "Next.js with pnpm package manager",
+  "test_framework": "N/A for initial build - visual/functional verification via next build",
+  "build_command": "cd /projects/sandbox/amaka-fashion-studio && pnpm build",
+  "test_command": "cd /projects/sandbox/amaka-fashion-studio && pnpm build",
+  "verification_instructions": "Run pnpm build to confirm the site compiles without errors. Check that all pages render correctly.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "pnpm install in the project root",
+  "environment_constraints": "OPEN_INTERNET - full access to npm registry and CDNs. Node.js v22, pnpm 10 available.",
+  "contribution_requirements": "Greenfield project - no existing contribution guidelines",
+  "key_patterns": "Next.js 14 App Router, Tailwind CSS for styling, TypeScript throughout, mobile-first responsive design, luxury aesthetic with emerald green (#006B3F), gold (#D4AF37), black (#0A0A0A), cream (#FDF8F0)",
+  "relevant_files": [
+    "src/app/layout.tsx",
+    "src/app/page.tsx",
+    "src/app/collections/page.tsx",
+    "src/app/about/page.tsx",
+    "src/app/contact/page.tsx",
+    "src/components/Navbar.tsx",
+    "src/components/Footer.tsx",
+    "src/components/ChatBot.tsx",
+    "src/components/WhatsAppButton.tsx",
+    "tailwind.config.ts",
+    "next.config.js"
+  ],
+  "directory_structure": "Next.js App Router structure: src/app/ for pages, src/components/ for reusable components, src/lib/ for utilities, public/ for static assets"
+}
