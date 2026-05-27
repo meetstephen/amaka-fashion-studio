@@ -19,8 +19,8 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const text = `Hello Amaka Fashion Atelier!%0A%0AName: ${formData.name}%0AEmail: ${formData.email}%0APhone: ${formData.phone}%0AMessage: ${formData.message}`;
-    window.open(`https://wa.me/2349131272407?text=${text}`, "_blank");
+    const message = `Hello Amaka Fashion Atelier!\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nMessage: ${formData.message}`;
+    window.open(`https://wa.me/2349131272407?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   return (

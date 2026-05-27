@@ -24,11 +24,6 @@ interface Intent {
 
 const intents: Intent[] = [
   {
-    keywords: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"],
-    reply:
-      "Welcome to Amaka Fashion Atelier! I am Dapper, your personal style consultant. I can help you explore our collections, book fittings, learn about fabrics, and much more. What would you like to know about today?",
-  },
-  {
     keywords: ["senator"],
     reply:
       "Our Senator Wear collection is the pride of Amaka Fashion Atelier. We offer classic ivory senators with gold embroidery, contemporary black senators with subtle patterns, and rich navy options with traditional detailing. Each piece is hand-finished with premium fabrics. Shall I connect you on WhatsApp to discuss a bespoke senator piece?",
@@ -99,6 +94,16 @@ const intents: Intent[] = [
       "Congratulations! Our wedding and special occasion collection is designed to make the groom shine. We offer custom three-piece suits, traditional Agbada sets for the ceremony, and coordinated groomsmen packages. The process begins with a consultation to understand your wedding theme, followed by fabric selection and multiple fittings. Let us make your special day unforgettable.",
   },
   {
+    keywords: ["quality", "craftsmanship"],
+    reply:
+      "Every piece from Amaka Fashion Atelier undergoes meticulous quality control. Our master tailors bring decades of experience to every stitch. We use reinforced seams, hand-finished buttonholes, and premium linings. Each garment is inspected at multiple stages to ensure it meets our exacting standards before it reaches you.",
+  },
+  {
+    keywords: ["time", "how long", "turnaround"],
+    reply:
+      "Turnaround times vary by piece: shirts typically take 5-7 days, suits and Senator Wear 2-3 weeks, and elaborate traditional pieces with embroidery 3-4 weeks. Rush orders can sometimes be accommodated for an additional fee. We never compromise quality for speed. Contact us on WhatsApp with your timeline and we will do our best.",
+  },
+  {
     keywords: ["help", "what can"],
     reply:
       "I can assist you with exploring our collections (Senator Wear, Suits, Shirts, Casual, Traditional, Corporate), booking appointments, understanding our fitting process, fabric guidance, pricing information, delivery details, and styling advice for any occasion. Simply ask about what interests you, or reach out on WhatsApp for personalized service.",
@@ -114,21 +119,19 @@ const intents: Intent[] = [
       "It has been a pleasure assisting you. Remember, great style is not about following trends, it is about knowing who you are. When you are ready to elevate your wardrobe, Amaka Fashion Atelier is here. Wishing you a distinguished day ahead!",
   },
   {
-    keywords: ["quality", "craftsmanship"],
+    keywords: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"],
     reply:
-      "Every piece from Amaka Fashion Atelier undergoes meticulous quality control. Our master tailors bring decades of experience to every stitch. We use reinforced seams, hand-finished buttonholes, and premium linings. Each garment is inspected at multiple stages to ensure it meets our exacting standards before it reaches you.",
-  },
-  {
-    keywords: ["time", "how long", "turnaround"],
-    reply:
-      "Turnaround times vary by piece: shirts typically take 5-7 days, suits and Senator Wear 2-3 weeks, and elaborate traditional pieces with embroidery 3-4 weeks. Rush orders can sometimes be accommodated for an additional fee. We never compromise quality for speed. Contact us on WhatsApp with your timeline and we will do our best.",
+      "Welcome to Amaka Fashion Atelier! I am Dapper, your personal style consultant. I can help you explore our collections, book fittings, learn about fabrics, and much more. What would you like to know about today?",
   },
 ];
 
 function generateReply(input: string): string {
   const lower = input.toLowerCase();
   for (const intent of intents) {
-    if (intent.keywords.some((kw) => lower.includes(kw))) {
+    if (intent.keywords.some((kw) => {
+      const regex = new RegExp(`\\b${kw}\\b`);
+      return regex.test(lower);
+    })) {
       return intent.reply;
     }
   }

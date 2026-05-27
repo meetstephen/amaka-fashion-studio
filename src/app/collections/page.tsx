@@ -273,15 +273,20 @@ export default function CollectionsPage() {
                   <p className="mt-1 text-sm text-black/60">
                     {item.description}
                   </p>
-                  <div className="mt-4 flex items-center gap-2 text-emerald">
+                  <a
+                    href={`https://wa.me/2349131272407?text=${encodeURIComponent(`Hello! I'm interested in "${item.name}" from your ${item.category} collection.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 flex items-center gap-2 text-emerald"
+                  >
                     <span className="text-xs uppercase tracking-[0.15em] font-medium">
-                      View Details
+                      Inquire Now
                     </span>
                     <ArrowRight
                       size={12}
                       className="transition-transform group-hover:translate-x-1"
                     />
-                  </div>
+                  </a>
                 </div>
               </motion.div>
             </motion.div>

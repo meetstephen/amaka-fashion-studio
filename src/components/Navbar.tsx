@@ -58,6 +58,7 @@ export default function Navbar() {
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden text-cream hover:text-gold transition-colors"
             aria-label="Toggle menu"
+            aria-expanded={isOpen}
           >
             {isOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
