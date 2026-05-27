@@ -98,7 +98,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="md:col-span-7"
           >
-            <p className="text-xs uppercase tracking-[0.3em] text-gold font-medium">
+            <p className="text-xs uppercase tracking-[0.3em] text-gold-accessible font-medium">
               The Beginning
             </p>
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-black mt-4">
