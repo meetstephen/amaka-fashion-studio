@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/collections", label: "Collections" },
+  { href: "/lookbook", label: "Lookbook" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -34,7 +36,8 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Brand */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center gap-3">
+            <Logo className="h-10 w-10" />
             <span className="font-heading text-2xl font-bold text-gold tracking-wide">
               Amaka Fashion Atelier
             </span>
@@ -76,7 +79,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="block text-cream hover:text-gold transition-colors duration-200 text-sm uppercase tracking-widest font-medium py-2"
+                className="block text-cream hover:text-gold transition-colors duration-200 text-sm uppercase tracking-widest font-medium py-3"
               >
                 {link.label}
               </Link>
