@@ -9,6 +9,7 @@
   --color-emerald-dark: #004D2D;
   --color-gold-light: #E5C84B;
   --color-gold-dark: #B8962E;
+  --color-gold-accessible: #8B7424;
 
   --font-heading: var(--font-playfair);
   --font-body: var(--font-inter);
