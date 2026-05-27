@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import { Analytics } from "@vercel/analytics/next";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -48,6 +49,7 @@ export default function RootLayout({
         <Footer />
         <ChatBot />
         <WhatsAppButton />
+        <Analytics />
       </body>
     </html>
   );
