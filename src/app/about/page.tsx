@@ -2,6 +2,13 @@
 
 import { motion } from "framer-motion";
 import { Award, Gem, Scissors, Star } from "lucide-react";
+import {
+  fadeInUp,
+  fadeInLeft,
+  fadeInRight,
+  staggerContainer,
+  staggerItem,
+} from "@/lib/animations";
 
 const values = [
   {
@@ -62,10 +69,10 @@ export default function AboutPage() {
         {/* Brand Story */}
         <div className="mt-16 grid items-center gap-14 md:grid-cols-12">
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            variants={fadeInLeft}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
             className="md:col-span-5"
           >
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl">
@@ -85,10 +92,10 @@ export default function AboutPage() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            variants={fadeInRight}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.1 }}
             className="md:col-span-7"
           >
             <p className="text-xs uppercase tracking-[0.3em] text-gold font-medium">
@@ -154,15 +161,19 @@ export default function AboutPage() {
             />
           </div>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {values.map(({ icon: Icon, title, description }, index) => (
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {values.map(({ icon: Icon, title, description }) => (
               <motion.div
                 key={title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="rounded-2xl border border-black/5 bg-white p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                variants={staggerItem}
+                whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}
+                className="rounded-2xl border border-black/5 bg-white p-6 text-center shadow-sm transition-all duration-300"
               >
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald/10">
                   <Icon className="text-emerald" size={24} />
@@ -175,15 +186,15 @@ export default function AboutPage() {
                 </p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
 
         {/* Philosophy Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
           className="mt-24 rounded-3xl bg-black p-10 md:p-16 text-center"
         >
           <p className="text-xs uppercase tracking-[0.3em] text-gold font-medium">

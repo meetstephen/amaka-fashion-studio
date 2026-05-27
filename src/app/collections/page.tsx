@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { staggerContainer, staggerItem } from "@/lib/animations";
 
 type Category =
   | "All"
@@ -206,12 +207,20 @@ export default function CollectionsPage() {
         </div>
 
         {/* Filter Chips */}
-        <div className="mt-10 flex flex-wrap justify-center gap-2.5 md:gap-3">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className="mt-10 flex flex-wrap justify-center gap-2.5 md:gap-3"
+        >
           {categories.map((cat) => {
             const active = filter === cat;
             return (
-              <button
+              <motion.button
                 key={cat}
+                variants={staggerItem}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => setFilter(cat)}
                 className={`whitespace-nowrap rounded-full border px-4 py-2 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-300 sm:text-xs ${
@@ -221,27 +230,32 @@ export default function CollectionsPage() {
                 }`}
               >
                 {cat}
-              </button>
+              </motion.button>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Items Grid */}
         <motion.div
           layout
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
           className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           {visible.map((item) => (
             <motion.div
               key={item.id}
               layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.4 }}
+              variants={staggerItem}
               className="group"
             >
-              <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <motion.div
+                whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm"
+              >
                 <div
                   className={`aspect-[4/3] bg-gradient-to-br ${item.gradient} relative`}
                 >
@@ -269,7 +283,7 @@ export default function CollectionsPage() {
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           ))}
         </motion.div>

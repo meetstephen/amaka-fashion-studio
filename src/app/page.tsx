@@ -3,6 +3,12 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+import {
+  fadeInLeft,
+  fadeInRight,
+  staggerContainer,
+  staggerItem,
+} from "@/lib/animations";
 
 const collections = [
   {
@@ -104,20 +110,24 @@ export default function HomePage() {
               transition={{ duration: 0.9, delay: 0.4 }}
               className="mt-10 flex flex-wrap items-center gap-4"
             >
-              <Link
-                href="/collections"
-                className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                Explore Collections <ArrowRight size={16} />
-              </Link>
-              <a
-                href="https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier!%20I%27d%20like%20to%20book%20an%20appointment."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-cream/30 px-7 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:border-gold hover:text-gold hover:-translate-y-0.5"
-              >
-                Book Appointment
-              </a>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  href="/collections"
+                  className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  Explore Collections <ArrowRight size={16} />
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <a
+                  href="https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier!%20I%27d%20like%20to%20book%20an%20appointment."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-cream/30 px-7 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:border-gold hover:text-gold hover:-translate-y-0.5"
+                >
+                  Book Appointment
+                </a>
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -153,17 +163,24 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {collections.map((collection, index) => (
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {collections.map((collection) => (
               <motion.div
                 key={collection.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                variants={staggerItem}
               >
                 <Link href="/collections" className="group block">
-                  <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <motion.div
+                    whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-all duration-300"
+                  >
                     <div
                       className={`aspect-[4/3] bg-gradient-to-br ${collection.gradient} flex items-end p-6`}
                     >
@@ -186,11 +203,11 @@ export default function HomePage() {
                         className="text-emerald transition-transform group-hover:translate-x-1"
                       />
                     </div>
-                  </div>
+                  </motion.div>
                 </Link>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -199,10 +216,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid items-center gap-14 md:grid-cols-2">
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              variants={fadeInLeft}
+              initial="hidden"
+              whileInView="visible"
               viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
             >
               <p className="text-xs uppercase tracking-[0.3em] text-gold font-medium">
                 Our Heritage
@@ -228,10 +245,10 @@ export default function HomePage() {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              variants={fadeInRight}
+              initial="hidden"
+              whileInView="visible"
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.15 }}
               className="relative aspect-square rounded-3xl overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald via-emerald-dark to-black" />

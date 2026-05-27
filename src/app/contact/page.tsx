@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import {
+  fadeInRight,
+  staggerContainer,
+  staggerItem,
+} from "@/lib/animations";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -58,14 +63,14 @@ export default function ContactPage() {
         <div className="mt-16 grid gap-12 lg:grid-cols-2">
           {/* Contact Info */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
             className="space-y-6"
           >
             {/* WhatsApp CTA */}
-            <div className="rounded-2xl bg-emerald p-8 text-cream">
+            <motion.div variants={staggerItem} className="rounded-2xl bg-emerald p-8 text-cream">
               <h3 className="font-heading text-2xl font-bold">
                 Chat with Us on WhatsApp
               </h3>
@@ -82,10 +87,10 @@ export default function ContactPage() {
                 <MessageCircle size={16} />
                 +234 913 127 2407
               </a>
-            </div>
+            </motion.div>
 
             {/* Location Card */}
-            <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald/10">
                   <MapPin size={18} className="text-emerald" />
@@ -102,10 +107,10 @@ export default function ContactPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Phone */}
-            <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald/10">
                   <Phone size={18} className="text-emerald" />
@@ -122,10 +127,10 @@ export default function ContactPage() {
                   </a>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Business Hours */}
-            <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
+            <motion.div variants={staggerItem} className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald/10">
                   <Clock size={18} className="text-emerald" />
@@ -141,15 +146,15 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
 
           {/* Contact Form */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            variants={fadeInRight}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.15 }}
           >
             <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
               <h3 className="font-heading text-2xl font-bold text-black">

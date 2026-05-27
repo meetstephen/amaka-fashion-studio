@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Add the Dapper AI chatbot component, WhatsApp floating button, luxury animations with Framer Motion, and final polish for production readiness.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/components/ChatBot.tsx - the 'Dapper' AI fashion assistant chatbot with: a floating chat button (bottom-right, above WhatsApp button) styled with emerald/gold, expandable chat window with luxury design, bot avatar and name 'Dapper', pre-programmed fashion responses for common queries (greetings, asking about Senator Wear, suits, measurements, appointments, pricing, styling advice), typing animation indicator, message history display with user/bot differentiation, smooth open/close animations. The bot should respond intelligently to keywords like 'senator', 'suit', 'shirt', 'traditional', 'appointment', 'size', 'price', 'style', 'hello', 'help'. Include at least 15-20 varied responses covering the clothing categories.",
     "Create src/components/WhatsAppButton.tsx - a floating WhatsApp button with: fixed position (bottom-right corner), WhatsApp green with gold border accent, click opens WhatsApp chat with pre-filled message to +234 913 127 2407 (use https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier), pulse animation to draw attention, tooltip on hover showing 'Chat with us on WhatsApp'.",
