@@ -1,20 +1,41 @@
-"use client";
+import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+// --- Rate Limiting ---
+const rateMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60_000;
 
-interface Message {
-  id: string;
-  from: "bot" | "user";
-  text: string;
-  isAI?: boolean;
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
+  const now = Date.now();
+  const entry = rateMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  if (entry.count >= RATE_LIMIT) {
+    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  entry.count += 1;
+  return { allowed: true, retryAfter: 0 };
 }
 
-function makeId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// --- Input Sanitization ---
+function sanitizeInput(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  let cleaned = raw.trim();
+  cleaned = cleaned.replace(/<[^>]*>/g, "");
+  if (cleaned.length > 500) {
+    cleaned = cleaned.slice(0, 500);
+  }
+  return cleaned;
 }
 
+// --- Keyword Matching Fallback ---
 interface Intent {
   keywords: string[];
   reply: string;
@@ -138,192 +159,99 @@ function generateReply(input: string): string {
   return "Thank you for your interest in Amaka Fashion Atelier. I am not quite sure I understand that query, but I would love to help. You can ask me about our collections (Senator Wear, Suits, Shirts, Casual, Traditional, Corporate), appointments, sizing, pricing, delivery, or styling advice. Alternatively, reach out directly on WhatsApp for personalized assistance.";
 }
 
-const INITIAL_MESSAGE: Message = {
-  id: "welcome",
-  from: "bot",
-  text: "Welcome to Amaka Fashion Atelier! I am Dapper, your personal style consultant. How may I assist you today? Ask me about our collections, appointments, sizing, or styling advice.",
-};
+// --- Gemini System Prompt ---
+const SYSTEM_INSTRUCTION = `You are Dapper, the personal style consultant for Amaka Fashion Atelier, a luxury menswear brand based in Abakaliki, Ebonyi State, Nigeria.
 
-export default function ChatBot() {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
-  const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+About the brand:
+- We specialize in Senator Wear, Suits, Shirts, Casual wear, Traditional attire, and Corporate fashion
+- All garments are bespoke/made-to-measure
+- Pricing is consultation-based (we don't list specific prices)
+- Located in Abakaliki, Ebonyi State, Nigeria
+- Hours: Mon-Fri 9AM-6PM, Sat 10AM-4PM, Sun by appointment
+- WhatsApp: +234 913 127 2407
+- We deliver nationwide across Nigeria
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+Your personality:
+- Warm, professional, and knowledgeable about men's fashion
+- Speak with sophistication but remain approachable
+- Always guide customers toward WhatsApp (+234 913 127 2407) for orders, appointments, and detailed inquiries
+- Keep responses concise (2-4 sentences max) unless the customer asks for detail
+- Never make up prices - always direct to WhatsApp for pricing
+- Celebrate Nigerian fashion heritage`;
+
+// --- POST Handler ---
+export async function POST(request: NextRequest) {
+  try {
+    // Get client IP for rate limiting
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+
+    // Check rate limit
+    const { allowed, retryAfter } = checkRateLimit(ip);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests", retryAfter },
+        { status: 429 }
+      );
     }
-  }, [messages, typing, open]);
 
-  const sendMessage = async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const userMsg: Message = { id: makeId(), from: "user", text: trimmed };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setTyping(true);
-
+    // Parse request body
+    let body: { message?: unknown; history?: Array<{ role: string; content: string }> };
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize input
+    const message = sanitizeInput(body.message);
+    if (!message) {
+      return NextResponse.json(
+        { error: "Message is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if Gemini API key is available
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      // Fall back to keyword matching
+      const reply = generateReply(message);
+      return NextResponse.json({ reply, fallback: true });
+    }
+
+    // Call Gemini API
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: SYSTEM_INSTRUCTION,
       });
 
-      if (res.status === 429) {
-        const botMsg: Message = {
-          id: makeId(),
-          from: "bot",
-          text: "Please wait a moment before sending another message.",
-        };
-        setMessages((prev) => [...prev, botMsg]);
-        setTyping(false);
-        return;
-      }
+      const chat = model.startChat({
+        history: (body.history || []).map((h) => ({
+          role: h.role === "user" ? "user" : "model",
+          parts: [{ text: h.content }],
+        })),
+      });
 
-      if (!res.ok) {
-        throw new Error(`API returned ${res.status}`);
-      }
+      const result = await chat.sendMessage(message);
+      const reply = result.response.text();
 
-      const data = await res.json();
-      const botMsg: Message = {
-        id: makeId(),
-        from: "bot",
-        text: data.reply,
-        isAI: !data.fallback,
-      };
-      setMessages((prev) => [...prev, botMsg]);
-    } catch {
-      // Network error or fetch failure - fall back to local keyword matching
-      const reply = generateReply(trimmed);
-      const botMsg: Message = { id: makeId(), from: "bot", text: reply };
-      setMessages((prev) => [...prev, botMsg]);
-    } finally {
-      setTyping(false);
+      return NextResponse.json({ reply });
+    } catch (err) {
+      console.error("[Chat API] Gemini API error:", err);
+      // Fall back to keyword matching
+      const reply = generateReply(message);
+      return NextResponse.json({ reply, fallback: true });
     }
-  };
-
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage(input);
-  };
-
-  return (
-    <>
-      {/* Chat Toggle Button */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Open Dapper style consultant chat"
-        className="fixed bottom-24 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-emerald shadow-lg transition-all duration-300 hover:bg-emerald-dark hover:-translate-y-0.5 hover:shadow-xl"
-      >
-        <span className="absolute inset-0 rounded-full border-2 border-gold/40" />
-        {open ? (
-          <X size={22} className="text-cream" />
-        ) : (
-          <MessageCircle size={22} className="text-cream" />
-        )}
-      </button>
-
-      {/* Chat Window */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-40 right-6 z-50 flex h-[min(520px,70vh)] w-[min(350px,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl border border-black/10 bg-cream shadow-2xl"
-          >
-            {/* Header */}
-            <header className="flex items-center justify-between gap-3 bg-emerald px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-full bg-gold/20">
-                  <Sparkles size={16} className="text-gold" />
-                </div>
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold text-cream">Dapper</div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-cream/70">
-                    Your Style Consultant
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close chat"
-                className="grid h-8 w-8 place-items-center rounded-full bg-cream/10 transition-colors hover:bg-cream/20"
-              >
-                <X size={14} className="text-cream" />
-              </button>
-            </header>
-
-            {/* Messages */}
-            <div
-              ref={scrollRef}
-              className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
-            >
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                      m.from === "user"
-                        ? "rounded-br-sm bg-gold text-black"
-                        : "rounded-bl-sm bg-emerald text-cream"
-                    }`}
-                  >
-                    {m.text}
-                    {m.from === "bot" && m.isAI && (
-                      <span className="ml-1.5 inline-flex items-center align-middle" title="AI-powered response">
-                        <Sparkles size={10} className="text-gold" />
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* Typing Indicator */}
-              {typing && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-sm bg-emerald/80 px-4 py-3">
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-cream [animation-delay:-0.3s]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-cream [animation-delay:-0.15s]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-cream" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Input */}
-            <form
-              onSubmit={onSubmit}
-              className="flex items-center gap-2 border-t border-black/10 bg-white px-3 py-3"
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about our collections..."
-                className="flex-1 rounded-full bg-cream px-4 py-2.5 text-sm text-black placeholder:text-black/40 focus:outline-none focus:ring-1 focus:ring-emerald"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || typing}
-                aria-label="Send message"
-                className="grid h-9 w-9 place-items-center rounded-full bg-emerald text-cream transition-colors hover:bg-emerald-dark disabled:opacity-40"
-              >
-                <Send size={14} />
-              </button>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
+  } catch (err) {
+    console.error("[Chat API] Unexpected error:", err);
+    return NextResponse.json(
+      { reply: "I apologize for the inconvenience. Please try again or reach out on WhatsApp at +234 913 127 2407.", fallback: true }
+    );
+  }
 }
