@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import HeroCarousel from "@/components/HeroCarousel";
+import FeaturedSection from "@/components/FeaturedSection";
 import ProcessSection from "@/components/ProcessSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import NewsletterCTA from "@/components/NewsletterCTA";
@@ -53,45 +54,7 @@ export default function HomePage() {
       <HeroCarousel />
 
       {/* Featured image / season block */}
-      <section className="relative bg-black grain-overlay">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="relative aspect-[16/9] w-full overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald via-emerald-dark to-black" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
-            <div className="absolute inset-0 flex items-end justify-start p-8 md:p-16">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-              >
-                <p className="text-[10px] uppercase tracking-[0.42em] text-gold font-medium">
-                  Featured · This Season
-                </p>
-                <h2 className="mt-4 font-heading text-3xl md:text-5xl font-semibold text-cream">
-                  The Harmattan Edit
-                </h2>
-                <p className="mt-3 max-w-lg text-cream/75 text-sm md:text-base leading-relaxed">
-                  Cooler weights of Italian wool. Earth-toned silks. The pieces we
-                  reach for as the dust rises and the season turns inward.
-                </p>
-                <Link
-                  href="/collections"
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-black transition-all hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg min-h-[44px]"
-                >
-                  Discover the Edit <ArrowRight size={14} />
-                </Link>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <FeaturedSection />
 
       {/* Featured Collections Grid */}
       <section className="py-20 md:py-32 bg-cream grain-overlay">

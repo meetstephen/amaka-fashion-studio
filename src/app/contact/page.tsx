@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import { Clock, MapPin, MessageCircle, Phone, Ruler, Send } from "lucide-react";
+import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import FaqAccordion from "@/components/FaqAccordion";
 import {
@@ -278,6 +279,35 @@ export default function ContactPage() {
             <FaqAccordion />
           </div>
         </div>
+
+        {/* Measurements CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mt-20 mx-auto max-w-3xl"
+        >
+          <div className="rounded-2xl border border-emerald/10 bg-emerald p-8 md:p-10 text-center">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-cream/15">
+              <Ruler size={28} className="text-gold" />
+            </div>
+            <h3 className="mt-5 font-heading text-2xl md:text-3xl font-semibold text-cream">
+              Submit Your Measurements
+            </h3>
+            <p className="mt-3 text-cream/75 text-sm md:text-base leading-relaxed max-w-lg mx-auto">
+              Get perfectly fitted garments by submitting your body measurements online.
+              Our tailors will use them to craft your bespoke pieces.
+            </p>
+            <Link
+              href="/measurements"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-black transition-all hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg min-h-[48px]"
+            >
+              <Ruler size={14} />
+              Submit Measurements
+            </Link>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

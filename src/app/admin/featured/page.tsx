@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Upload, Save, Check } from "lucide-react";
+import { Upload, Save, Check, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadImage } from "@/lib/upload";
@@ -127,6 +127,28 @@ export default function AdminFeaturedPage() {
                 aria-label="Choose featured image file"
               />
             </label>
+            {(hasImage || imageUrl) && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (isSupabaseConfigured() && supabase && featuredId) {
+                    await supabase.from("featured").update({ image_url: null }).eq("id", featuredId);
+                    if (imageUrl) {
+                      const { deleteImage } = await import("@/lib/upload");
+                      await deleteImage(imageUrl);
+                    }
+                  }
+                  setImageUrl(null);
+                  setHasImage(false);
+                  setSaved(false);
+                }}
+                className="mt-3 w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors"
+                aria-label="Remove featured image"
+              >
+                <Trash2 size={16} />
+                Remove Current Image
+              </button>
+            )}
           </div>
 
           {/* Overlay text fields */}
