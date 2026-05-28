@@ -59,16 +59,23 @@ export default function AdminImagesPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage
+    // TODO: Upload to Supabase Storage (loop with batching)
     const files = e.target.files;
     if (files && files.length > 0) {
-      const newImage: ImageItem = {
-        id: Date.now(),
-        name: files[0].name.replace(/\.[^/.]+$/, ""),
+      const placeholderGradients = [
+        "bg-gradient-to-br from-emerald to-emerald-dark",
+        "bg-gradient-to-br from-emerald-dark to-black",
+        "bg-gradient-to-br from-black to-emerald",
+        "bg-gradient-to-br from-emerald-light to-emerald",
+        "bg-gradient-to-br from-emerald to-black",
+      ];
+      const newImages: ImageItem[] = Array.from(files).map((f, idx) => ({
+        id: Date.now() + idx,
+        name: f.name.replace(/\.[^/.]+$/, ""),
         category: "uncategorized",
-        gradient: "bg-gradient-to-br from-gray-400 to-gray-600",
-      };
-      setImages([newImage, ...images]);
+        gradient: placeholderGradients[idx % placeholderGradients.length],
+      }));
+      setImages([...newImages, ...images]);
     }
     e.target.value = "";
   };
@@ -105,25 +112,43 @@ export default function AdminImagesPage() {
             Image Management
           </h2>
           <p className="text-black/60 text-sm mt-1">
-            Upload and manage all site images
+            Upload and manage all site images. Pick multiple at once on mobile.
           </p>
         </div>
 
-        {/* Upload button */}
-        <label
-          className="inline-flex items-center gap-2 px-5 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors cursor-pointer font-medium"
-          aria-label="Upload image"
-        >
-          <Upload size={18} />
-          Upload Image
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleUpload}
-            className="hidden"
-            aria-label="Choose image file"
-          />
-        </label>
+        {/* Upload buttons - gallery (multi-select) + camera */}
+        <div className="flex flex-wrap gap-2">
+          <label
+            className="inline-flex items-center gap-2 px-5 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors cursor-pointer font-medium text-sm"
+            aria-label="Upload images from gallery"
+          >
+            <Upload size={18} />
+            Upload images
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleUpload}
+              className="hidden"
+              aria-label="Choose one or more image files"
+            />
+          </label>
+          <label
+            className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
+            aria-label="Take photo with camera"
+          >
+            <Upload size={16} />
+            Take photo
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleUpload}
+              className="hidden"
+              aria-label="Capture photo with camera"
+            />
+          </label>
+        </div>
       </div>
 
       {/* Image grid */}

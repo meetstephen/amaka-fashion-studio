@@ -59,7 +59,7 @@ export default function InquiryDrawer() {
             scale: pulse ? [1, 1.08, 1] : 1,
           }}
           transition={{ duration: 0.45, ease: "easeOut" }}
-          className="fixed bottom-6 left-1/2 sm:left-auto sm:right-24 -translate-x-1/2 sm:translate-x-0 bottom-[5.5rem] sm:bottom-6 z-40 inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-medium uppercase tracking-[0.22em] text-black shadow-xl hover:bg-gold-light transition-colors"
+          className="fixed bottom-24 left-6 z-40 inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-medium uppercase tracking-[0.22em] text-black shadow-xl hover:bg-gold-light transition-colors"
         >
           <ShoppingBag size={16} />
           Inquiry
