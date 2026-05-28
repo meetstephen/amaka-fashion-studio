@@ -1,5 +1,7 @@
 // Shared chatbot intents and keyword-based reply generation.
-// Used by both the ChatBot client component (fallback) and the /api/chat server route.
+// Used by both the ChatBot client component (offline fallback) and the
+// /api/chat server route. Keep replies under ~120 words; warm, knowledgeable,
+// bespoke-sales-consultant tone.
 
 export interface Intent {
   keywords: string[];
@@ -10,109 +12,107 @@ export const intents: Intent[] = [
   {
     keywords: ["senator"],
     reply:
-      "Our Senator Wear collection is the pride of Amaka Fashion Atelier. We offer classic ivory senators with gold embroidery, contemporary black senators with subtle patterns, and rich navy options with traditional detailing. Each piece is hand-finished with premium fabrics. Shall I connect you on WhatsApp to discuss a bespoke senator piece?",
+      "Senator Wear is the heart of our atelier. Think The Statesman in ivory with whisper-fine gold embroidery, The Diplomat in onyx black with tonal motifs, The Elder in deep navy. We hand-finish each piece in Italian wool blends and silk-cotton, cut for the Nigerian gentleman's silhouette. Shall I open a conversation on WhatsApp so we can plan your bespoke senator?",
   },
   {
     keywords: ["suit", "suits"],
     reply:
-      "Our bespoke suits are crafted for the man who commands every room he enters. We offer double-breasted charcoal wool, slim-fit emerald with peak lapels, and three-piece navy with gold buttons. The fitting process includes fabric selection, measurements, and two fitting sessions to ensure perfection. Prices start from consultation. Would you like to book a fitting?",
+      "Our suits are built to command. Three-piece navy with gold buttons, a slim emerald with peak lapels, double-breasted charcoal in Italian wool - all bespoke and made-to-measure. Linings can carry a discreet Ankara print. The journey begins with a consultation; I'll connect you on WhatsApp at +234 913 127 2407 to book a fitting.",
   },
   {
     keywords: ["shirt"],
     reply:
-      "Our shirt collection blends classic tailoring with modern flair. From crisp white Oxford shirts with French cuffs to lightweight linen for tropical elegance, and even Ankara-inspired patterns for the bold gentleman. Every shirt can be customized with monogramming, choice of collar style, and cuff design. What occasion are you dressing for?",
+      "We craft shirts in Egyptian cotton and French linen, with French cuffs, hidden plackets, or hand-stitched collars to your preference. Ankara-lined cuffs are a quiet favourite. Monogramming is included. Whisper your colour and occasion and I'll guide you - or message us on WhatsApp to begin.",
   },
   {
-    keywords: ["traditional", "agbada", "native"],
+    keywords: ["traditional", "agbada", "native", "isiagu", "aso"],
     reply:
-      "Our Traditional Wear celebrates the rich heritage of Nigerian craftsmanship. The collection features hand-woven Isiagu with traditional caps, royal Agbada with intricate embroidery, and ceremonial attire with gold thread work. Each piece honors ancestral pride while embracing contemporary cuts. Perfect for chieftaincy events, weddings, and cultural celebrations.",
+      "Our Traditional collection honours Igbo heritage and Nigerian ceremonial dress: hand-woven Aso-Oke isiagu, royal agbada with bullion gold thread, and ceremonial robes for chieftaincy and weddings. Each piece is paired with a matching cap. WhatsApp the team to start your bespoke commission.",
   },
   {
     keywords: ["casual"],
     reply:
-      "For the gentleman who appreciates relaxed luxury, our Casual collection offers premium cotton kaftans, contemporary sets with Igbo motifs, and Agbada-inspired lounge wear. Comfort meets sophistication in every piece. Ideal for weekends, brunches, and informal gatherings where you still want to stand out.",
+      "Relaxed luxury: premium cotton kaftans, contemporary sets with subtle Igbo motifs, and agbada-inspired loungewear. Cut for movement, finished for elegance. Perfect for Sunday brunches, owambe afternoons, and anywhere you want to look effortless.",
   },
   {
-    keywords: ["corporate", "office", "work"],
+    keywords: ["corporate", "office", "work", "boardroom"],
     reply:
-      "Command the boardroom with our Corporate collection. We tailor power suits with structured shoulders, blazers with matching trousers, and modern ensembles with African print linings for that subtle cultural statement. All made-to-measure so you project authority and confidence in every meeting.",
+      "Power dressing, the Amaka way. Structured shoulders, cleaner lapels, and African-print linings whispered inside the jacket. Tailored blazers, two-pieces, and boardroom suits in worsted Italian wool. Made to your measurements so authority sits on you naturally.",
   },
   {
     keywords: ["measure", "size", "fitting"],
     reply:
-      "Booking a fitting is simple. Visit our atelier in Abakaliki for an in-person session where we take precise measurements over a complimentary drink. For clients outside Abakaliki, we offer guided measurement sessions via WhatsApp video call. Every garment goes through at least two fitting rounds before completion. Send us a message on WhatsApp to schedule yours.",
+      "Our fitting journey is six steps: Consultation, Measurement, Fabric Selection, First Fitting, Adjustments, and Final Delivery. In-person at our Abakaliki atelier with complimentary refreshments, or guided over WhatsApp video for clients elsewhere. Ready to start? +234 913 127 2407.",
   },
   {
     keywords: ["appointment", "book", "visit"],
     reply:
-      "We would love to welcome you to our atelier! To book an appointment, simply reach out via WhatsApp at +234 913 127 2407. Our studio is open Monday to Friday 9AM-6PM, Saturday 10AM-4PM, and Sunday by appointment only. We recommend booking at least 2 days ahead so we can dedicate our full attention to you.",
+      "We'd love to host you. Send a message to +234 913 127 2407 with your preferred date and the occasion you're dressing for. Studio hours: Mon-Fri 9-6, Sat 10-4, Sun by appointment. Booking 48 hours ahead lets us prepare swatches just for you.",
   },
   {
-    keywords: ["price", "cost", "how much"],
+    keywords: ["price", "cost", "how much", "naira", "ngn"],
     reply:
-      "At Amaka Fashion Atelier, pricing reflects the quality of materials and craftsmanship in each piece. Senator Wear starts from a premium range, suits are priced based on fabric selection, and shirts offer accessible luxury. For an accurate quote tailored to your preferences, please reach out on WhatsApp. Every piece is an investment in timeless style.",
+      "Each garment is bespoke, so pricing follows the fabric and detailing you choose. Shirts begin in our premium tier; senator wear and suits are luxury; ceremonial agbada is fully bespoke. For an exact quote tailored to your vision, please WhatsApp us - we'll respond within minutes.",
   },
   {
-    keywords: ["style", "advice", "recommend"],
+    keywords: ["style", "advice", "recommend", "what should"],
     reply:
-      "I would be happy to help with styling advice! For formal events, our Senator Wear or three-piece suits make a commanding statement. Corporate settings call for our tailored blazers and structured suits. Casual occasions pair perfectly with our premium kaftans. For weddings, consider our ceremonial Agbada or a custom suit. What occasion are you dressing for?",
+      "Tell me the moment you're dressing for and I'll suggest a starting point. Boardroom or wedding? Owambe or church Sunday? Daytime garden or candlelit reception? Each calls for a different fabric weight, palette, and silhouette - and we tailor every detail accordingly.",
   },
   {
     keywords: ["where", "location", "address"],
     reply:
-      "Amaka Fashion Atelier is located in Abakaliki, Ebonyi State, Nigeria. Our atelier is where the magic happens, with skilled artisans bringing designs to life daily. Studio visits are by appointment to ensure you receive our undivided attention. We also offer nationwide delivery for clients across Nigeria.",
+      "Our atelier is in Abakaliki, Ebonyi State. Studio visits are by appointment so each gentleman receives our undivided attention. We deliver across Nigeria and ship internationally on request. Map and directions on the Contact page.",
   },
   {
-    keywords: ["fabric", "material"],
+    keywords: ["fabric", "material", "wool", "cotton", "linen", "silk"],
     reply:
-      "We source only the finest fabrics for our creations. Our selection includes Italian wool for suits, premium Egyptian cotton for shirts, hand-woven Aso-Oke for traditional pieces, French linen for casual wear, and luxurious silk blends for special occasions. Each fabric is chosen for its drape, durability, and luxurious feel. Would you like guidance on fabric selection?",
+      "We work with Italian wool (Loro Piana-grade for suits), Egyptian cotton (shirts), French linen (warm-weather pieces), hand-woven Aso-Oke (traditional), and silk blends (ceremonial linings). Each fabric is chosen for drape, durability, and how it moves with you. Want to feel a swatch? Visit the atelier or request a fabric kit on WhatsApp.",
   },
   {
     keywords: ["deliver", "shipping"],
     reply:
-      "We deliver nationwide across Nigeria. Pieces are carefully packaged in premium garment bags to preserve their quality during transit. Delivery typically takes 3-5 business days depending on your location. Rush delivery options are available for time-sensitive orders. Every package is handled with the same care we put into crafting your garment.",
+      "Nationwide delivery in branded garment bags - typically 3-5 business days. International shipping via courier on request. Rush options available; we'll never compromise the finish to meet a deadline though, so book early for big occasions.",
   },
   {
-    keywords: ["wedding", "groom"],
+    keywords: ["wedding", "groom", "groomsmen"],
     reply:
-      "Congratulations! Our wedding and special occasion collection is designed to make the groom shine. We offer custom three-piece suits, traditional Agbada sets for the ceremony, and coordinated groomsmen packages. The process begins with a consultation to understand your wedding theme, followed by fabric selection and multiple fittings. Let us make your special day unforgettable.",
+      "Weddings are our craft at its finest. Three-piece bespoke for the groom, ceremonial agbada for the traditional rite, coordinated groomsmen packages with consistent cuts and colours. We start 8-12 weeks ahead - WhatsApp us with your date and I'll outline the timeline.",
   },
   {
-    keywords: ["quality", "craftsmanship"],
+    keywords: ["quality", "craftsmanship", "stitch"],
     reply:
-      "Every piece from Amaka Fashion Atelier undergoes meticulous quality control. Our master tailors bring decades of experience to every stitch. We use reinforced seams, hand-finished buttonholes, and premium linings. Each garment is inspected at multiple stages to ensure it meets our exacting standards before it reaches you.",
+      "Every piece is hand-finished: pick-stitched lapels, hand-rolled buttonholes, French seams, and silk linings cut on the bias. Master tailors with decades of practice quality-check each stage. We make fewer pieces, better.",
   },
   {
-    keywords: ["time", "how long", "turnaround"],
+    keywords: ["time", "how long", "turnaround", "ready"],
     reply:
-      "Turnaround times vary by piece: shirts typically take 5-7 days, suits and Senator Wear 2-3 weeks, and elaborate traditional pieces with embroidery 3-4 weeks. Rush orders can sometimes be accommodated for an additional fee. We never compromise quality for speed. Contact us on WhatsApp with your timeline and we will do our best.",
+      "Shirts: 5-7 days. Suits and senator wear: 2-3 weeks. Heavily embroidered ceremonial pieces: 3-4 weeks. Rush is sometimes possible for an additional fee. Tell us your deadline on WhatsApp and we'll be honest about what's achievable.",
+  },
+  {
+    keywords: ["heritage", "culture", "igbo", "nigerian"],
+    reply:
+      "We are rooted in Igbo craftsmanship - Abakaliki cotton, Aso-Oke weaving, and ceremonial dress traditions - reimagined for the gentleman who moves between worlds. Heritage isn't a costume here; it's the blueprint we tailor distinction onto.",
   },
   {
     keywords: ["help", "what can"],
     reply:
-      "I can assist you with exploring our collections (Senator Wear, Suits, Shirts, Casual, Traditional, Corporate), booking appointments, understanding our fitting process, fabric guidance, pricing information, delivery details, and styling advice for any occasion. Simply ask about what interests you, or reach out on WhatsApp for personalized service.",
+      "I can walk you through any of our six collections, explain our fitting process, talk fabrics, suggest pieces for a specific occasion, or hand you off to our team on WhatsApp for orders and appointments. What's on your mind?",
   },
   {
-    keywords: ["thank", "thanks"],
+    keywords: ["thank", "thanks", "appreciate"],
     reply:
-      "The pleasure is entirely ours! At Amaka Fashion Atelier, we believe every gentleman deserves to look and feel exceptional. If you need anything else, I am here. You can also reach our team directly on WhatsApp for personalized assistance. Dress well, live well.",
+      "The pleasure is ours entirely. When you're ready to begin, the atelier is one WhatsApp message away. Dress well; live distinguished.",
   },
   {
-    keywords: ["bye", "goodbye", "see you"],
+    keywords: ["bye", "goodbye", "see you", "later"],
     reply:
-      "It has been a pleasure assisting you. Remember, great style is not about following trends, it is about knowing who you are. When you are ready to elevate your wardrobe, Amaka Fashion Atelier is here. Wishing you a distinguished day ahead!",
+      "Until next time. Remember - elegance is never an accident. The atelier is here when you're ready.",
   },
   {
-    keywords: [
-      "hello",
-      "hi",
-      "hey",
-      "good morning",
-      "good afternoon",
-      "good evening",
-    ],
+    keywords: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "greetings"],
     reply:
-      "Welcome to Amaka Fashion Atelier! I am Dapper, your personal style consultant. I can help you explore our collections, book fittings, learn about fabrics, and much more. What would you like to know about today?",
+      "Welcome - I'm Dapper, your style consultant at Amaka Fashion Atelier. Ask me about senator wear, bespoke suits, traditional pieces, fabrics, fittings, or anything else. Where shall we begin?",
   },
 ];
 
@@ -121,12 +121,29 @@ export function generateReply(input: string): string {
   for (const intent of intents) {
     if (
       intent.keywords.some((kw) => {
-        const regex = new RegExp(`\\b${kw}\\b`);
+        // Allow multi-word keywords as-is, but otherwise enforce word boundaries
+        const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = / /.test(kw)
+          ? new RegExp(escaped)
+          : new RegExp(`\\b${escaped}\\b`);
         return regex.test(lower);
       })
     ) {
       return intent.reply;
     }
   }
-  return "Thank you for your interest in Amaka Fashion Atelier. I am not quite sure I understand that query, but I would love to help. You can ask me about our collections (Senator Wear, Suits, Shirts, Casual, Traditional, Corporate), appointments, sizing, pricing, delivery, or styling advice. Alternatively, reach out directly on WhatsApp for personalized assistance.";
+  return "I'd love to help. Try asking about our Senator Wear, Suits, Shirts, Casual, Traditional, or Corporate collections - or about fabrics, fittings, or pricing. For appointments, WhatsApp us at +234 913 127 2407.";
 }
+
+/**
+ * Suggested quick-reply chips that surface after a bot response.
+ * Returned ordering matters; we cycle through these to avoid repetition.
+ */
+export const QUICK_REPLIES: Array<{ id: string; label: string; prompt: string }> = [
+  { id: "qr-senator", label: "Senator Wear", prompt: "Tell me about Senator Wear" },
+  { id: "qr-suits", label: "Bespoke suits", prompt: "What suits do you offer?" },
+  { id: "qr-fitting", label: "Book a fitting", prompt: "I'd like to book a fitting" },
+  { id: "qr-fabric", label: "What fabrics?", prompt: "What fabrics do you use?" },
+  { id: "qr-wedding", label: "Wedding options", prompt: "We have a wedding coming up - what do you suggest?" },
+  { id: "qr-process", label: "Fitting process", prompt: "Walk me through your fitting process" },
+];
