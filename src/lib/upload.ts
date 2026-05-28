@@ -12,7 +12,7 @@ export async function uploadImage(file: File, folder = 'general'): Promise<strin
   });
 
   if (error) {
-    console.error('[Upload]', error.message);
+    console.error('[Upload] Failed:', error.message, '- This usually means Storage policies are not set. Run the SQL in supabase/rls-policies.sql');
     return null;
   }
 

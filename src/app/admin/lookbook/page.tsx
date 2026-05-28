@@ -29,6 +29,8 @@ export default function AdminLookbookPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newCaption, setNewCaption] = useState("");
   const [replaceFlashId, setReplaceFlashId] = useState<number | string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -92,7 +94,11 @@ export default function AdminLookbookPage() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setUploading(true);
+    setUploadError(null);
+
     if (isSupabaseConfigured() && supabase) {
+      let successCount = 0;
       for (const file of Array.from(files)) {
         const url = await uploadImage(file, "lookbook");
         if (url) {
@@ -106,8 +112,12 @@ export default function AdminLookbookPage() {
               { id: data.id, title: data.title || "", caption: data.caption || "", gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black", image_url: data.image_url || undefined },
               ...prev,
             ]);
+            successCount++;
           }
         }
+      }
+      if (successCount === 0) {
+        setUploadError("Upload failed. Please check that your Supabase Storage bucket 'images' has the correct policies enabled. See supabase/rls-policies.sql for the SQL to run.");
       }
     } else {
       const palette = [
@@ -126,6 +136,7 @@ export default function AdminLookbookPage() {
       }));
       setItems((prev) => [...newItems, ...prev]);
     }
+    setUploading(false);
     e.target.value = "";
   };
 
@@ -159,6 +170,9 @@ export default function AdminLookbookPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setUploading(true);
+    setUploadError(null);
+
     if (isSupabaseConfigured() && supabase) {
       const current = items.find((item) => item.id === id);
       if (current?.image_url) {
@@ -169,12 +183,17 @@ export default function AdminLookbookPage() {
         const { error } = await supabase.from("lookbook").update({ image_url: url }).eq("id", id);
         if (!error) {
           setItems((prev) => prev.map((item) => (item.id === id ? { ...item, image_url: url } : item)));
+        } else {
+          setUploadError("Failed to update lookbook record. Please try again.");
         }
+      } else {
+        setUploadError("Upload failed. Please check that your Supabase Storage bucket 'images' has the correct policies enabled. See supabase/rls-policies.sql for the SQL to run.");
       }
     }
 
     setReplaceFlashId(id);
     setTimeout(() => setReplaceFlashId(null), 1500);
+    setUploading(false);
     e.target.value = "";
   };
 
@@ -194,15 +213,17 @@ export default function AdminLookbookPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center gap-2 px-4 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-4 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Add new item"
+            aria-disabled={uploading}
           >
             <Plus size={18} />
             Add Item
           </button>
           <label
-            className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Upload photos from gallery (multiple supported)"
+            aria-disabled={uploading}
           >
             <Upload size={18} />
             Upload photos
@@ -213,11 +234,13 @@ export default function AdminLookbookPage() {
               onChange={handleUploadPhoto}
               className="hidden"
               aria-label="Choose one or more lookbook photos"
+              disabled={uploading}
             />
           </label>
           <label
-            className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald/30 text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald/30 text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Take photo with camera"
+            aria-disabled={uploading}
           >
             <Upload size={16} />
             Camera
@@ -228,6 +251,7 @@ export default function AdminLookbookPage() {
               onChange={handleUploadPhoto}
               className="hidden"
               aria-label="Capture lookbook photo with camera"
+              disabled={uploading}
             />
           </label>
         </div>
@@ -269,6 +293,26 @@ export default function AdminLookbookPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Upload feedback */}
+      {uploading && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald/10 px-4 py-3 text-sm text-emerald">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald border-t-transparent" />
+          Uploading...
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {uploadError}
+          <button
+            onClick={() => setUploadError(null)}
+            className="ml-2 text-red-500 hover:text-red-700 font-medium"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

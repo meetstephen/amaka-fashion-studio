@@ -57,3 +57,29 @@ CREATE POLICY "Admin write featured" ON featured FOR ALL USING (true);
 CREATE POLICY "Admin all inquiries" ON inquiries FOR ALL USING (true);
 CREATE POLICY "Admin all bookings" ON bookings FOR ALL USING (true);
 CREATE POLICY "Admin all customers" ON customers FOR ALL USING (true);
+
+-- ============================================
+-- STORAGE POLICIES (for the 'images' bucket)
+-- ============================================
+-- Run these AFTER creating the 'images' bucket in Storage settings.
+-- These allow public reads and authenticated/anon uploads.
+
+-- Allow anyone to view images (public bucket)
+CREATE POLICY "Public read images bucket"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'images');
+
+-- Allow uploads (INSERT) to the images bucket
+CREATE POLICY "Allow uploads to images bucket"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'images');
+
+-- Allow updates (e.g., replace) in the images bucket
+CREATE POLICY "Allow updates in images bucket"
+  ON storage.objects FOR UPDATE
+  USING (bucket_id = 'images');
+
+-- Allow deletions from the images bucket
+CREATE POLICY "Allow deletes from images bucket"
+  ON storage.objects FOR DELETE
+  USING (bucket_id = 'images');
