@@ -1,30 +1,91 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Upload, Save, Check } from "lucide-react";
 import Link from "next/link";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { uploadImage } from "@/lib/upload";
 
 export default function AdminFeaturedPage() {
-  // TODO: Fetch from Supabase 'featured' table
   const [title, setTitle] = useState("The Modern Nigerian Gentleman");
   const [subtitle, setSubtitle] = useState(
     "Luxury menswear crafted with heritage and distinction"
   );
   const [saved, setSaved] = useState(false);
   const [hasImage, setHasImage] = useState(true);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [featuredId, setFeaturedId] = useState<string | null>(null);
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage and update 'featured' table
+  useEffect(() => {
+    async function loadData() {
+      if (isSupabaseConfigured() && supabase) {
+        const { data, error } = await supabase
+          .from("featured")
+          .select("*")
+          .limit(1)
+          .single();
+        if (!error && data) {
+          setTitle(data.title || "The Modern Nigerian Gentleman");
+          setSubtitle(data.subtitle || "Luxury menswear crafted with heritage and distinction");
+          setImageUrl(data.image_url || null);
+          setHasImage(!!data.image_url);
+          setFeaturedId(data.id);
+          return;
+        }
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
+    if (!files || files.length === 0) return;
+
+    if (isSupabaseConfigured() && supabase) {
+      const url = await uploadImage(files[0], "featured");
+      if (url) {
+        setImageUrl(url);
+        setHasImage(true);
+        setSaved(false);
+      }
+    } else {
       setHasImage(true);
       setSaved(false);
     }
     e.target.value = "";
   };
 
-  const handleSave = () => {
-    // TODO: Save title and subtitle to Supabase 'featured' table
+  const handleSave = async () => {
+    if (isSupabaseConfigured() && supabase) {
+      const payload = {
+        title,
+        subtitle,
+        image_url: imageUrl,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (featuredId) {
+        const { error } = await supabase
+          .from("featured")
+          .update(payload)
+          .eq("id", featuredId);
+        if (!error) {
+          setSaved(true);
+          return;
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("featured")
+          .insert(payload)
+          .select()
+          .single();
+        if (!error && data) {
+          setFeaturedId(data.id);
+          setSaved(true);
+          return;
+        }
+      }
+    }
     setSaved(true);
   };
 
@@ -133,8 +194,16 @@ export default function AdminFeaturedPage() {
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-black">Live Preview</h3>
           <div className="relative rounded-xl overflow-hidden shadow-lg">
-            {/* Gradient placeholder for featured image */}
-            <div className="aspect-[16/9] bg-gradient-to-br from-emerald via-emerald-dark to-black" />
+            {/* Featured image or gradient placeholder */}
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="Featured preview"
+                className="aspect-[16/9] w-full object-cover"
+              />
+            ) : (
+              <div className="aspect-[16/9] bg-gradient-to-br from-emerald via-emerald-dark to-black" />
+            )}
             {/* Overlay */}
             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-6">
               <h4 className="text-xl sm:text-2xl lg:text-3xl font-heading font-bold text-cream mb-2">
