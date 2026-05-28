@@ -100,6 +100,21 @@ export const intents: Intent[] = [
       "I can walk you through any of our six collections, explain our fitting process, talk fabrics, suggest pieces for a specific occasion, or hand you off to our team on WhatsApp for orders and appointments. What's on your mind?",
   },
   {
+    keywords: ["what do you do", "what do you make", "what do you sell", "what do you offer", "collections", "what products"],
+    reply:
+      "We craft six distinct collections: 1) Senator Wear - our flagship, hand-finished in Italian wool blends. 2) Bespoke Suits - made-to-measure, with optional Ankara-print linings. 3) Premium Shirts - Egyptian cotton, monogramming included. 4) Casual - luxury kaftans and contemporary sets. 5) Traditional - Igbo heritage pieces, agbada, isiagu with ceremonial caps. 6) Corporate - boardroom suits with African-print inner linings. Each piece is bespoke. WhatsApp us at +234 913 127 2407 to start your order.",
+  },
+  {
+    keywords: ["who are you", "what is amaka", "about amaka", "tell me about"],
+    reply:
+      "We are Amaka Fashion Atelier - a luxury bespoke menswear house in Abakaliki, Ebonyi State, Nigeria. Founded in 2024, we dress the modern Nigerian gentleman with hand-finished garments rooted in Igbo craftsmanship. We make fewer pieces, better. Every suit, senator, shirt, and agbada is cut to your measurements and finished by master tailors.",
+  },
+  {
+    keywords: ["how do i order", "how to buy", "how to order", "place an order", "purchase"],
+    reply:
+      "Ordering is simple: message us on WhatsApp at +234 913 127 2407. Tell us what you're looking for (or send a reference photo), and we'll guide you through consultation, measurement, fabric selection, and fitting. We can take measurements in-person at our Abakaliki studio or remotely via WhatsApp video call.",
+  },
+  {
     keywords: ["thank", "thanks", "appreciate"],
     reply:
       "The pleasure is ours entirely. When you're ready to begin, the atelier is one WhatsApp message away. Dress well; live distinguished.",
@@ -132,7 +147,7 @@ export function generateReply(input: string): string {
       return intent.reply;
     }
   }
-  return "I'd love to help. Try asking about our Senator Wear, Suits, Shirts, Casual, Traditional, or Corporate collections - or about fabrics, fittings, or pricing. For appointments, WhatsApp us at +234 913 127 2407.";
+  return "I can help with any of our six collections (Senator Wear, Suits, Shirts, Casual, Traditional, Corporate), explain our fitting process, discuss fabrics, suggest pieces for your occasion, or connect you with our team. What would you like to know? For immediate assistance, WhatsApp us at +234 913 127 2407.";
 }
 
 /**
