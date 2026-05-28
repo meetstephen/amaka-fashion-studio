@@ -10,6 +10,30 @@
 -- - The anon key with these policies allows reads from public site
 --   and writes from admin panel (which is protected by session auth)
 
+-- ============================================
+-- SECURITY NOTE
+-- ============================================
+-- The policies below use USING (true) which means the anon key can
+-- perform ALL operations (SELECT, INSERT, UPDATE, DELETE) on every table.
+-- This is acceptable for a single-admin site where:
+--   1. The admin panel is gated by server-side session middleware
+--   2. The anon key is only used for public reads from the storefront
+--   3. Public writes (measurements form) go through a rate-limited API route
+--
+-- FOR PRODUCTION HARDENING, consider:
+--   - Restrict anon role to SELECT-only on content tables
+--   - Move all INSERT/UPDATE/DELETE to server-side API routes
+--     that use the SUPABASE_SERVICE_ROLE_KEY (never exposed to browser)
+--   - Add Supabase Auth and use auth.uid() in write policies
+--   - Add rate limiting on public INSERT tables (like customers)
+--
+-- Example hardened policy for customers table (public insert only):
+--   CREATE POLICY "Public insert customers" ON customers
+--     FOR INSERT WITH CHECK (true);
+--   CREATE POLICY "Admin manage customers" ON customers
+--     FOR ALL USING (auth.uid() IS NOT NULL);
+-- ============================================
+
 -- Enable RLS on all tables
 ALTER TABLE images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookbook ENABLE ROW LEVEL SECURITY;

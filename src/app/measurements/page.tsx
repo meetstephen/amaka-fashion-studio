@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, MessageCircle, Ruler, Send } from "lucide-react";
 import BackButton from "@/components/BackButton";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { fadeInUp, staggerContainer, staggerItem } from "@/lib/animations";
 
 interface MeasurementForm {
@@ -89,23 +88,31 @@ export default function MeasurementsPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const measurementsString = `Chest: ${form.chest}", Waist: ${form.waist}", Hips: ${form.hips}", Shoulder: ${form.shoulder}", Sleeve: ${form.sleeve}", Neck: ${form.neck}", Inseam: ${form.inseam}", Shirt Length: ${form.shirtLength}"`;
-
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.from("customers").insert({
-        name: form.name,
-        phone: form.phone,
-        email: form.email || null,
-        city: form.city || null,
-        measurements: measurementsString,
-        notes: form.notes || null,
-        total_orders: 0,
+    try {
+      const res = await fetch("/api/measurements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          city: form.city,
+          chest: form.chest,
+          waist: form.waist,
+          hips: form.hips,
+          shoulder: form.shoulder,
+          sleeve: form.sleeve,
+          neck: form.neck,
+          inseam: form.inseam,
+          shirtLength: form.shirtLength,
+          notes: form.notes,
+        }),
       });
-
-      if (error) {
+      const data = await res.json();
+      if (!res.ok || data.fallback) {
         setShowWhatsApp(true);
       }
-    } else {
+    } catch {
       setShowWhatsApp(true);
     }
 
