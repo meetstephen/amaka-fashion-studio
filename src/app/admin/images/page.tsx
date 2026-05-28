@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Upload, Pencil, Trash2, X, Check, Camera } from "lucide-react";
 import Link from "next/link";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { uploadImage, deleteImage } from "@/lib/upload";
 
 interface ImageItem {
-  id: number;
+  id: number | string;
   name: string;
   category: string;
   gradient: string;
+  url?: string;
 }
 
-// TODO: Fetch from Supabase 'images' table
 const initialImages: ImageItem[] = [
   {
     id: 1,
@@ -53,16 +55,80 @@ const initialImages: ImageItem[] = [
 
 export default function AdminImagesPage() {
   const [images, setImages] = useState<ImageItem[]>(initialImages);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | string | null>(null);
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState("");
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-  const [replaceFlashId, setReplaceFlashId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | string | null>(null);
+  const [replaceFlashId, setReplaceFlashId] = useState<number | string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage (loop with batching)
+  useEffect(() => {
+    async function loadData() {
+      if (isSupabaseConfigured() && supabase) {
+        const { data, error } = await supabase
+          .from("images")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          setImages(
+            data.map((row) => ({
+              id: row.id,
+              name: row.name || "",
+              category: row.category || "uncategorized",
+              gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black",
+              url: row.url || undefined,
+            }))
+          );
+          return;
+        }
+      }
+      setImages(initialImages);
+    }
+    loadData();
+  }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    if (isSupabaseConfigured() && supabase) {
+      let successCount = 0;
+      for (const file of Array.from(files)) {
+        const url = await uploadImage(file, "gallery");
+        if (url) {
+          const { data, error } = await supabase
+            .from("images")
+            .insert({
+              url,
+              name: file.name.replace(/\.[^/.]+$/, ""),
+              category: "uncategorized",
+            })
+            .select()
+            .single();
+          if (!error && data) {
+            setImages((prev) => [
+              {
+                id: data.id,
+                name: data.name || "",
+                category: data.category || "uncategorized",
+                gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black",
+                url: data.url || undefined,
+              },
+              ...prev,
+            ]);
+            successCount++;
+          }
+        }
+      }
+      if (successCount === 0) {
+        setUploadError("Upload failed. Please check that your Supabase Storage bucket 'images' has the correct policies enabled. See supabase/rls-policies.sql for the SQL to run.");
+      }
+    } else {
+      // localStorage fallback
       const placeholderGradients = [
         "bg-gradient-to-br from-emerald to-emerald-dark",
         "bg-gradient-to-br from-emerald-dark to-black",
@@ -76,20 +142,42 @@ export default function AdminImagesPage() {
         category: "uncategorized",
         gradient: placeholderGradients[idx % placeholderGradients.length],
       }));
-      setImages([...newImages, ...images]);
+      setImages((prev) => [...newImages, ...prev]);
     }
+    setUploading(false);
     e.target.value = "";
   };
 
-  const handleReplace = (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage and update record
+  const handleReplace = async (id: number | string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // For now, log - in real implementation: upload file, get URL, update image.image_url
-    console.log("Would replace image", id, "with", file.name);
-    // Visual feedback - show "Replaced!" briefly
+
+    setUploading(true);
+    setUploadError(null);
+
+    if (isSupabaseConfigured() && supabase) {
+      const current = images.find((img) => img.id === id);
+      if (current?.url) {
+        await deleteImage(current.url);
+      }
+      const url = await uploadImage(file, "gallery");
+      if (url) {
+        const { error } = await supabase.from("images").update({ url }).eq("id", id);
+        if (!error) {
+          setImages((prev) =>
+            prev.map((img) => (img.id === id ? { ...img, url } : img))
+          );
+        } else {
+          setUploadError("Failed to update image record. Please try again.");
+        }
+      } else {
+        setUploadError("Upload failed. Please check that your Supabase Storage bucket 'images' has the correct policies enabled. See supabase/rls-policies.sql for the SQL to run.");
+      }
+    }
+
     setReplaceFlashId(id);
     setTimeout(() => setReplaceFlashId(null), 1500);
+    setUploading(false);
     e.target.value = "";
   };
 
@@ -99,10 +187,26 @@ export default function AdminImagesPage() {
     setEditCategory(image.category);
   };
 
-  const saveEdit = () => {
-    // TODO: Update in Supabase 'images' table
-    setImages(
-      images.map((img) =>
+  const saveEdit = async () => {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase
+        .from("images")
+        .update({ name: editName, category: editCategory })
+        .eq("id", editingId);
+      if (!error) {
+        setImages((prev) =>
+          prev.map((img) =>
+            img.id === editingId
+              ? { ...img, name: editName, category: editCategory }
+              : img
+          )
+        );
+        setEditingId(null);
+        return;
+      }
+    }
+    setImages((prev) =>
+      prev.map((img) =>
         img.id === editingId
           ? { ...img, name: editName, category: editCategory }
           : img
@@ -111,9 +215,20 @@ export default function AdminImagesPage() {
     setEditingId(null);
   };
 
-  const handleDelete = (id: number) => {
-    // TODO: Delete from Supabase Storage and 'images' table
-    setImages(images.filter((img) => img.id !== id));
+  const handleDelete = async (id: number | string) => {
+    if (isSupabaseConfigured() && supabase) {
+      const current = images.find((img) => img.id === id);
+      if (current?.url) {
+        await deleteImage(current.url);
+      }
+      const { error } = await supabase.from("images").delete().eq("id", id);
+      if (!error) {
+        setImages((prev) => prev.filter((img) => img.id !== id));
+        setDeleteConfirmId(null);
+        return;
+      }
+    }
+    setImages((prev) => prev.filter((img) => img.id !== id));
     setDeleteConfirmId(null);
   };
 
@@ -133,8 +248,9 @@ export default function AdminImagesPage() {
         {/* Upload buttons - gallery (multi-select) + camera */}
         <div className="flex flex-wrap gap-2">
           <label
-            className="inline-flex items-center gap-2 px-5 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors cursor-pointer font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-5 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors cursor-pointer font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Upload images from gallery"
+            aria-disabled={uploading}
           >
             <Upload size={18} />
             Upload images
@@ -145,11 +261,13 @@ export default function AdminImagesPage() {
               onChange={handleUpload}
               className="hidden"
               aria-label="Choose one or more image files"
+              disabled={uploading}
             />
           </label>
           <label
-            className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Take photo with camera"
+            aria-disabled={uploading}
           >
             <Upload size={16} />
             Take photo
@@ -160,10 +278,31 @@ export default function AdminImagesPage() {
               onChange={handleUpload}
               className="hidden"
               aria-label="Capture photo with camera"
+              disabled={uploading}
             />
           </label>
         </div>
       </div>
+
+      {/* Upload feedback */}
+      {uploading && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald/10 px-4 py-3 text-sm text-emerald">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald border-t-transparent" />
+          Uploading...
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {uploadError}
+          <button
+            onClick={() => setUploadError(null)}
+            className="ml-2 text-red-500 hover:text-red-700 font-medium"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Image grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -174,7 +313,15 @@ export default function AdminImagesPage() {
           >
             {/* Thumbnail with always-visible "Tap to replace" badge */}
             <div className="relative">
-              <div className={`aspect-video ${image.gradient}`} />
+              {image.url ? (
+                <img
+                  src={image.url}
+                  alt={image.name}
+                  className="aspect-video w-full object-cover"
+                />
+              ) : (
+                <div className={`aspect-video ${image.gradient}`} />
+              )}
 
               {/* Bottom gradient overlay so badge always has contrast */}
               <div

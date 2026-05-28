@@ -10,6 +10,7 @@ import {
   type BookingStatus,
   type BookingType,
 } from "@/lib/orders-store";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const TYPE_LABEL: Record<BookingType, string> = {
   consultation: "Consultation",
@@ -33,6 +34,34 @@ const STATUS_STYLE: Record<BookingStatus, string> = {
   cancelled: "bg-black/5 text-black/50 border-black/15",
 };
 
+function dbToBooking(row: Record<string, unknown>): Booking {
+  return {
+    id: row.id as string,
+    customerName: (row.customer_name as string) || "",
+    customerContact: (row.customer_contact as string) || "",
+    type: (row.type as BookingType) || "consultation",
+    date: (row.date as string) || "",
+    time: (row.time as string) || "",
+    notes: (row.notes as string) || "",
+    status: (row.status as BookingStatus) || "scheduled",
+    createdAt: row.created_at ? new Date(row.created_at as string).getTime() : Date.now(),
+  };
+}
+
+function bookingToDb(b: Booking) {
+  return {
+    id: b.id,
+    customer_name: b.customerName,
+    customer_contact: b.customerContact,
+    type: b.type,
+    date: b.date,
+    time: b.time,
+    notes: b.notes,
+    status: b.status,
+    created_at: new Date(b.createdAt).toISOString(),
+  };
+}
+
 export default function AdminBookingsPage() {
   const [items, setItems] = useState<Booking[]>([]);
   const [adding, setAdding] = useState(false);
@@ -46,12 +75,29 @@ export default function AdminBookingsPage() {
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
-    setItems(
-      [...getBookings()].sort((a, b) =>
-        `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)
-      )
-    );
+    async function loadData() {
+      if (isSupabaseConfigured() && supabase) {
+        const { data, error } = await supabase
+          .from("bookings")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          const mapped = data.map(dbToBooking);
+          setItems(
+            [...mapped].sort((a, b) =>
+              `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)
+            )
+          );
+          return;
+        }
+      }
+      setItems(
+        [...getBookings()].sort((a, b) =>
+          `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)
+        )
+      );
+    }
+    loadData();
   }, []);
 
   const update = (next: Booking[]) => {
@@ -62,7 +108,7 @@ export default function AdminBookingsPage() {
     saveBookings(sorted);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!draft.customerName.trim() || !draft.date || !draft.time) return;
     const b: Booking = {
       id: crypto.randomUUID(),
@@ -70,6 +116,32 @@ export default function AdminBookingsPage() {
       status: "scheduled",
       createdAt: Date.now(),
     };
+
+    if (isSupabaseConfigured() && supabase) {
+      const { data, error } = await supabase
+        .from("bookings")
+        .insert(bookingToDb(b))
+        .select()
+        .single();
+      if (!error && data) {
+        const newBooking = dbToBooking(data);
+        setItems((prev) =>
+          [...prev, newBooking].sort((a, bb) =>
+            `${a.date}T${a.time}`.localeCompare(`${bb.date}T${bb.time}`)
+          )
+        );
+        setDraft({
+          customerName: "",
+          customerContact: "",
+          type: "consultation",
+          date: new Date().toISOString().slice(0, 10),
+          time: "10:00",
+          notes: "",
+        });
+        setAdding(false);
+        return;
+      }
+    }
     update([b, ...items]);
     setDraft({
       customerName: "",
@@ -82,10 +154,27 @@ export default function AdminBookingsPage() {
     setAdding(false);
   };
 
-  const handleStatus = (id: string, status: BookingStatus) =>
+  const handleStatus = async (id: string, status: BookingStatus) => {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+        return;
+      }
+    }
     update(items.map((b) => (b.id === id ? { ...b, status } : b)));
-  const handleDelete = (id: string) =>
+  };
+
+  const handleDelete = async (id: string) => {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.from("bookings").delete().eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.filter((b) => b.id !== id));
+        return;
+      }
+    }
     update(items.filter((b) => b.id !== id));
+  };
 
   const upcoming = items.filter(
     (b) => `${b.date}T${b.time}` >= new Date().toISOString().slice(0, 16)

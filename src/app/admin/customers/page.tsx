@@ -8,6 +8,35 @@ import {
   saveCustomers,
   type Customer,
 } from "@/lib/orders-store";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+
+function dbToCustomer(row: Record<string, unknown>): Customer {
+  return {
+    id: row.id as string,
+    name: (row.name as string) || "",
+    phone: (row.phone as string) || "",
+    email: (row.email as string) || "",
+    city: (row.city as string) || "",
+    notes: (row.notes as string) || "",
+    measurements: (row.measurements as string) || "",
+    totalOrders: (row.total_orders as number) || 0,
+    createdAt: row.created_at ? new Date(row.created_at as string).getTime() : Date.now(),
+  };
+}
+
+function customerToDb(c: Customer) {
+  return {
+    id: c.id,
+    name: c.name,
+    phone: c.phone,
+    email: c.email,
+    city: c.city,
+    notes: c.notes,
+    measurements: c.measurements,
+    total_orders: c.totalOrders,
+    created_at: new Date(c.createdAt).toISOString(),
+  };
+}
 
 export default function AdminCustomersPage() {
   const [items, setItems] = useState<Customer[]>([]);
@@ -24,8 +53,20 @@ export default function AdminCustomersPage() {
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
-    setItems(getCustomers());
+    async function loadData() {
+      if (isSupabaseConfigured() && supabase) {
+        const { data, error } = await supabase
+          .from("customers")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          setItems(data.map(dbToCustomer));
+          return;
+        }
+      }
+      setItems(getCustomers());
+    }
+    loadData();
   }, []);
 
   const update = (next: Customer[]) => {
@@ -45,7 +86,7 @@ export default function AdminCustomersPage() {
     );
   }, [items, query]);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!draft.name.trim()) return;
     const c: Customer = {
       ...draft,
@@ -53,14 +94,56 @@ export default function AdminCustomersPage() {
       createdAt: Date.now(),
       totalOrders: 0,
     };
+
+    if (isSupabaseConfigured() && supabase) {
+      const { data, error } = await supabase
+        .from("customers")
+        .insert(customerToDb(c))
+        .select()
+        .single();
+      if (!error && data) {
+        setItems((prev) => [dbToCustomer(data), ...prev]);
+        setDraft({ name: "", phone: "", email: "", city: "", notes: "", measurements: "" });
+        setAdding(false);
+        return;
+      }
+    }
     update([c, ...items]);
     setDraft({ name: "", phone: "", email: "", city: "", notes: "", measurements: "" });
     setAdding(false);
   };
 
-  const handleDelete = (id: string) => update(items.filter((c) => c.id !== id));
-  const handlePatch = (id: string, patch: Partial<Customer>) =>
+  const handleDelete = async (id: string) => {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.from("customers").delete().eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.filter((c) => c.id !== id));
+        return;
+      }
+    }
+    update(items.filter((c) => c.id !== id));
+  };
+
+  const handlePatch = async (id: string, patch: Partial<Customer>) => {
+    if (isSupabaseConfigured() && supabase) {
+      // Convert camelCase patch keys to snake_case for DB
+      const dbPatch: Record<string, unknown> = {};
+      if (patch.name !== undefined) dbPatch.name = patch.name;
+      if (patch.phone !== undefined) dbPatch.phone = patch.phone;
+      if (patch.email !== undefined) dbPatch.email = patch.email;
+      if (patch.city !== undefined) dbPatch.city = patch.city;
+      if (patch.notes !== undefined) dbPatch.notes = patch.notes;
+      if (patch.measurements !== undefined) dbPatch.measurements = patch.measurements;
+      if (patch.totalOrders !== undefined) dbPatch.total_orders = patch.totalOrders;
+
+      const { error } = await supabase.from("customers").update(dbPatch).eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+        return;
+      }
+    }
     update(items.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  };
 
   return (
     <div>

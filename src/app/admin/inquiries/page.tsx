@@ -15,6 +15,7 @@ import {
   type Inquiry,
   type InquiryStatus,
 } from "@/lib/orders-store";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const STATUS_LABEL: Record<InquiryStatus, string> = {
   new: "New",
@@ -32,6 +33,32 @@ const STATUS_STYLE: Record<InquiryStatus, string> = {
   lost: "bg-black/5 text-black/55 border-black/10",
 };
 
+function dbToInquiry(row: Record<string, unknown>): Inquiry {
+  return {
+    id: row.id as string,
+    customerName: (row.customer_name as string) || "",
+    customerContact: (row.customer_contact as string) || "",
+    itemNames: (row.item_names as string[]) || [],
+    notes: (row.notes as string) || "",
+    status: (row.status as InquiryStatus) || "new",
+    source: (row.source as Inquiry["source"]) || "other",
+    createdAt: row.created_at ? new Date(row.created_at as string).getTime() : Date.now(),
+  };
+}
+
+function inquiryToDb(i: Inquiry) {
+  return {
+    id: i.id,
+    customer_name: i.customerName,
+    customer_contact: i.customerContact,
+    item_names: i.itemNames,
+    notes: i.notes,
+    status: i.status,
+    source: i.source,
+    created_at: new Date(i.createdAt).toISOString(),
+  };
+}
+
 export default function AdminInquiriesPage() {
   const [items, setItems] = useState<Inquiry[]>([]);
   const [filter, setFilter] = useState<"all" | InquiryStatus>("all");
@@ -44,8 +71,20 @@ export default function AdminInquiriesPage() {
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
-    setItems(getInquiries());
+    async function loadData() {
+      if (isSupabaseConfigured() && supabase) {
+        const { data, error } = await supabase
+          .from("inquiries")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          setItems(data.map(dbToInquiry));
+          return;
+        }
+      }
+      setItems(getInquiries());
+    }
+    loadData();
   }, []);
 
   const update = (next: Inquiry[]) => {
@@ -53,7 +92,7 @@ export default function AdminInquiriesPage() {
     saveInquiries(next);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!draft.customerName.trim()) return;
     const inquiry: Inquiry = {
       id: crypto.randomUUID(),
@@ -68,14 +107,46 @@ export default function AdminInquiriesPage() {
       source: "in-person",
       createdAt: Date.now(),
     };
+
+    if (isSupabaseConfigured() && supabase) {
+      const { data, error } = await supabase
+        .from("inquiries")
+        .insert(inquiryToDb(inquiry))
+        .select()
+        .single();
+      if (!error && data) {
+        setItems((prev) => [dbToInquiry(data), ...prev]);
+        setDraft({ customerName: "", customerContact: "", items: "", notes: "" });
+        setAdding(false);
+        return;
+      }
+    }
     update([inquiry, ...items]);
     setDraft({ customerName: "", customerContact: "", items: "", notes: "" });
     setAdding(false);
   };
 
-  const handleDelete = (id: string) => update(items.filter((i) => i.id !== id));
-  const handleStatus = (id: string, status: InquiryStatus) =>
+  const handleDelete = async (id: string) => {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.from("inquiries").delete().eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        return;
+      }
+    }
+    update(items.filter((i) => i.id !== id));
+  };
+
+  const handleStatus = async (id: string, status: InquiryStatus) => {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.from("inquiries").update({ status }).eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
+        return;
+      }
+    }
     update(items.map((i) => (i.id === id ? { ...i, status } : i)));
+  };
 
   const visible = filter === "all" ? items : items.filter((i) => i.status === filter);
 

@@ -1,54 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Upload, Trash2, Plus, Camera, Check } from "lucide-react";
 import Link from "next/link";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { uploadImage, deleteImage } from "@/lib/upload";
 
 interface LookbookItem {
-  id: number;
+  id: number | string;
   title: string;
   caption: string;
   gradient: string;
+  image_url?: string;
 }
 
-// TODO: Fetch from Supabase 'lookbook' table
 const initialItems: LookbookItem[] = [
-  {
-    id: 1,
-    title: "Royal Emerald Agbada",
-    caption: "Flowing silhouette in deep emerald, embroidered with gold thread",
-    gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black",
-  },
-  {
-    id: 2,
-    title: "Midnight Senator",
-    caption: "Tailored precision in black with gold button accents",
-    gradient: "bg-gradient-to-br from-black via-gray-900 to-emerald-dark",
-  },
-  {
-    id: 3,
-    title: "Heritage Kaftan",
-    caption: "Traditional kaftan reimagined with contemporary clean lines",
-    gradient: "bg-gradient-to-br from-emerald-dark via-black to-gray-900",
-  },
-  {
-    id: 4,
-    title: "Gold Coast Blazer",
-    caption: "Structured blazer with hand-finished lapels and gold piping",
-    gradient: "bg-gradient-to-br from-yellow-900 via-emerald-dark to-black",
-  },
-  {
-    id: 5,
-    title: "Abakaliki Two-Piece",
-    caption: "Modern two-piece suit with Igbo-inspired embroidery details",
-    gradient: "bg-gradient-to-br from-emerald via-green-900 to-black",
-  },
-  {
-    id: 6,
-    title: "Ivory Ceremony Set",
-    caption: "Cream-toned ensemble for weddings and celebrations",
-    gradient: "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30",
-  },
+  { id: 1, title: "Royal Emerald Agbada", caption: "Flowing silhouette in deep emerald, embroidered with gold thread", gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black" },
+  { id: 2, title: "Midnight Senator", caption: "Tailored precision in black with gold button accents", gradient: "bg-gradient-to-br from-black via-gray-900 to-emerald-dark" },
+  { id: 3, title: "Heritage Kaftan", caption: "Traditional kaftan reimagined with contemporary clean lines", gradient: "bg-gradient-to-br from-emerald-dark via-black to-gray-900" },
+  { id: 4, title: "Gold Coast Blazer", caption: "Structured blazer with hand-finished lapels and gold piping", gradient: "bg-gradient-to-br from-yellow-900 via-emerald-dark to-black" },
+  { id: 5, title: "Abakaliki Two-Piece", caption: "Modern two-piece suit with Igbo-inspired embroidery details", gradient: "bg-gradient-to-br from-emerald via-green-900 to-black" },
+  { id: 6, title: "Ivory Ceremony Set", caption: "Cream-toned ensemble for weddings and celebrations", gradient: "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30" },
 ];
 
 export default function AdminLookbookPage() {
@@ -56,27 +28,98 @@ export default function AdminLookbookPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newCaption, setNewCaption] = useState("");
-  const [replaceFlashId, setReplaceFlashId] = useState<number | null>(null);
+  const [replaceFlashId, setReplaceFlashId] = useState<number | string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleAddItem = () => {
+  useEffect(() => {
+    async function loadData() {
+      if (isSupabaseConfigured() && supabase) {
+        const { data, error } = await supabase
+          .from("lookbook")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          setItems(
+            data.map((row) => ({
+              id: row.id,
+              title: row.title || "",
+              caption: row.caption || "",
+              gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black",
+              image_url: row.image_url || undefined,
+            }))
+          );
+          return;
+        }
+      }
+      setItems(initialItems);
+    }
+    loadData();
+  }, []);
+
+  const handleAddItem = async () => {
     if (!newTitle.trim()) return;
-    // TODO: Upload image to Supabase Storage and save to 'lookbook' table
+
+    if (isSupabaseConfigured() && supabase) {
+      const { data, error } = await supabase
+        .from("lookbook")
+        .insert({ title: newTitle, caption: newCaption })
+        .select()
+        .single();
+      if (!error && data) {
+        setItems((prev) => [
+          { id: data.id, title: data.title || "", caption: data.caption || "", gradient: "bg-gradient-to-br from-gray-400 to-gray-600", image_url: data.image_url || undefined },
+          ...prev,
+        ]);
+        setNewTitle("");
+        setNewCaption("");
+        setShowAddForm(false);
+        return;
+      }
+    }
+
     const newItem: LookbookItem = {
       id: Date.now(),
       title: newTitle,
       caption: newCaption,
       gradient: "bg-gradient-to-br from-gray-400 to-gray-600",
     };
-    setItems([newItem, ...items]);
+    setItems((prev) => [newItem, ...prev]);
     setNewTitle("");
     setNewCaption("");
     setShowAddForm(false);
   };
 
-  const handleUploadPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage (loop)
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    if (isSupabaseConfigured() && supabase) {
+      let successCount = 0;
+      for (const file of Array.from(files)) {
+        const url = await uploadImage(file, "lookbook");
+        if (url) {
+          const { data, error } = await supabase
+            .from("lookbook")
+            .insert({ image_url: url, title: file.name.replace(/\.[^/.]+$/, ""), caption: "" })
+            .select()
+            .single();
+          if (!error && data) {
+            setItems((prev) => [
+              { id: data.id, title: data.title || "", caption: data.caption || "", gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black", image_url: data.image_url || undefined },
+              ...prev,
+            ]);
+            successCount++;
+          }
+        }
+      }
+      if (successCount === 0) {
+        setUploadError("Upload failed. Please check that your Supabase Storage bucket 'images' has the correct policies enabled. See supabase/rls-policies.sql for the SQL to run.");
+      }
+    } else {
       const palette = [
         "bg-gradient-to-br from-emerald via-emerald-dark to-black",
         "bg-gradient-to-br from-black via-gray-900 to-emerald-dark",
@@ -91,28 +134,66 @@ export default function AdminLookbookPage() {
         caption: "",
         gradient: palette[idx % palette.length],
       }));
-      setItems([...newItems, ...items]);
+      setItems((prev) => [...newItems, ...prev]);
     }
+    setUploading(false);
     e.target.value = "";
   };
 
-  const handleUpdateItem = (id: number, field: "title" | "caption", value: string) => {
-    // TODO: Update in Supabase 'lookbook' table
-    setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  const handleUpdateItem = async (id: number | string, field: "title" | "caption", value: string) => {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.from("lookbook").update({ [field]: value }).eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+        return;
+      }
+    }
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleDelete = (id: number) => {
-    // TODO: Delete from Supabase Storage and 'lookbook' table
-    setItems(items.filter((item) => item.id !== id));
+  const handleDelete = async (id: number | string) => {
+    if (isSupabaseConfigured() && supabase) {
+      const current = items.find((item) => item.id === id);
+      if (current?.image_url) {
+        await deleteImage(current.image_url);
+      }
+      const { error } = await supabase.from("lookbook").delete().eq("id", id);
+      if (!error) {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+        return;
+      }
+    }
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleReplace = (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage and update record
+  const handleReplace = async (id: number | string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    console.log("Would replace lookbook item", id, "with", file.name);
+
+    setUploading(true);
+    setUploadError(null);
+
+    if (isSupabaseConfigured() && supabase) {
+      const current = items.find((item) => item.id === id);
+      if (current?.image_url) {
+        await deleteImage(current.image_url);
+      }
+      const url = await uploadImage(file, "lookbook");
+      if (url) {
+        const { error } = await supabase.from("lookbook").update({ image_url: url }).eq("id", id);
+        if (!error) {
+          setItems((prev) => prev.map((item) => (item.id === id ? { ...item, image_url: url } : item)));
+        } else {
+          setUploadError("Failed to update lookbook record. Please try again.");
+        }
+      } else {
+        setUploadError("Upload failed. Please check that your Supabase Storage bucket 'images' has the correct policies enabled. See supabase/rls-policies.sql for the SQL to run.");
+      }
+    }
+
     setReplaceFlashId(id);
     setTimeout(() => setReplaceFlashId(null), 1500);
+    setUploading(false);
     e.target.value = "";
   };
 
@@ -132,15 +213,17 @@ export default function AdminLookbookPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center gap-2 px-4 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-4 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Add new item"
+            aria-disabled={uploading}
           >
             <Plus size={18} />
             Add Item
           </button>
           <label
-            className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Upload photos from gallery (multiple supported)"
+            aria-disabled={uploading}
           >
             <Upload size={18} />
             Upload photos
@@ -151,11 +234,13 @@ export default function AdminLookbookPage() {
               onChange={handleUploadPhoto}
               className="hidden"
               aria-label="Choose one or more lookbook photos"
+              disabled={uploading}
             />
           </label>
           <label
-            className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald/30 text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
+            className={`inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald/30 text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm ${uploading ? "pointer-events-none opacity-60" : ""}`}
             aria-label="Take photo with camera"
+            aria-disabled={uploading}
           >
             <Upload size={16} />
             Camera
@@ -166,6 +251,7 @@ export default function AdminLookbookPage() {
               onChange={handleUploadPhoto}
               className="hidden"
               aria-label="Capture lookbook photo with camera"
+              disabled={uploading}
             />
           </label>
         </div>
@@ -210,6 +296,26 @@ export default function AdminLookbookPage() {
         </div>
       )}
 
+      {/* Upload feedback */}
+      {uploading && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald/10 px-4 py-3 text-sm text-emerald">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald border-t-transparent" />
+          Uploading...
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {uploadError}
+          <button
+            onClick={() => setUploadError(null)}
+            className="ml-2 text-red-500 hover:text-red-700 font-medium"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Items grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {items.map((item) => (
@@ -219,7 +325,15 @@ export default function AdminLookbookPage() {
           >
             {/* Thumbnail with always-visible "Tap to replace" badge */}
             <div className="relative">
-              <div className={`aspect-[4/3] ${item.gradient}`} />
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.title}
+                  className="aspect-[4/3] w-full object-cover"
+                />
+              ) : (
+                <div className={`aspect-[4/3] ${item.gradient}`} />
+              )}
 
               {/* Bottom gradient overlay so badge always has contrast */}
               <div
