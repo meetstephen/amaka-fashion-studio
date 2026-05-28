@@ -51,6 +51,7 @@ export default function AnnouncementBar() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
     setConfig(getAnnouncementConfig());
     setDismissed(sessionStorage.getItem(DISMISS_KEY) === "1");
     const onChange = () => setConfig(getAnnouncementConfig());

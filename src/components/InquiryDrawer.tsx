@@ -18,6 +18,7 @@ export default function InquiryDrawer() {
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
     setItems(getItems());
     const unsub = subscribe((next) => {
       setItems(next);

@@ -81,6 +81,7 @@ export default function AdminEditOverlay() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
     setEditMode(localStorage.getItem(EDIT_MODE_KEY) === "1");
   }, []);
 
@@ -200,6 +201,7 @@ export function EditPencil({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
     setActive(localStorage.getItem(EDIT_MODE_KEY) === "1");
     const handler = (e: Event) =>
       setActive(Boolean((e as CustomEvent<boolean>).detail));

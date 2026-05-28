@@ -14,6 +14,7 @@ export default function TestimonialsSection() {
   const [items, setItems] = useState<Testimonial[]>(DEFAULT_TESTIMONIALS);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
     setItems(getTestimonials());
     return subscribeTestimonials((next) => setItems(next));
   }, []);
