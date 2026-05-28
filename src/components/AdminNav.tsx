@@ -50,6 +50,7 @@ export default function AdminNav() {
   };
 
   return (
+    <>
     <nav className="bg-black text-cream border-b border-emerald/20 sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -161,5 +162,17 @@ export default function AdminNav() {
         </div>
       )}
     </nav>
+
+    {/* Fixed bottom bar for mobile - easy "Back to Site" */}
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-emerald min-h-[56px] flex items-center justify-center shadow-[0_-2px_12px_rgba(0,0,0,0.15)]">
+      <Link
+        href="/"
+        className="flex items-center gap-2 text-cream font-medium text-sm uppercase tracking-[0.14em] min-h-[56px] px-6"
+      >
+        <Home size={18} />
+        Return to Site
+      </Link>
+    </div>
+    </>
   );
 }
