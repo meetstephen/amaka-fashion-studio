@@ -1,211 +1,69 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Plus, Check } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { staggerContainer, staggerItem } from "@/lib/animations";
-
-type Category =
-  | "All"
-  | "Senator Wear"
-  | "Shirts"
-  | "Suits"
-  | "Casual"
-  | "Traditional"
-  | "Corporate";
-
-const categories: Category[] = [
-  "All",
-  "Senator Wear",
-  "Shirts",
-  "Suits",
-  "Casual",
-  "Traditional",
-  "Corporate",
-];
-
-const items = [
-  {
-    id: 1,
-    name: "The Statesman",
-    category: "Senator Wear" as Category,
-    description: "Ivory senator with gold embroidery accents",
-    gradient: "from-emerald to-emerald-dark",
-  },
-  {
-    id: 2,
-    name: "The Diplomat",
-    category: "Senator Wear" as Category,
-    description: "Classic black senator with subtle patterns",
-    gradient: "from-black to-emerald-dark",
-  },
-  {
-    id: 3,
-    name: "The Elder",
-    category: "Senator Wear" as Category,
-    description: "Rich navy senator with traditional detailing",
-    gradient: "from-emerald-dark to-black",
-  },
-  {
-    id: 4,
-    name: "The Executive",
-    category: "Senator Wear" as Category,
-    description: "Slate grey senator for the modern leader",
-    gradient: "from-emerald to-black",
-  },
-  {
-    id: 5,
-    name: "Oxford Classic",
-    category: "Shirts" as Category,
-    description: "Crisp white oxford with French cuffs",
-    gradient: "from-emerald-light to-emerald",
-  },
-  {
-    id: 6,
-    name: "The Artisan",
-    category: "Shirts" as Category,
-    description: "Patterned shirt with Ankara-inspired print",
-    gradient: "from-emerald to-emerald-light",
-  },
-  {
-    id: 7,
-    name: "Linen Breeze",
-    category: "Shirts" as Category,
-    description: "Lightweight linen shirt for tropical elegance",
-    gradient: "from-emerald-dark to-emerald-light",
-  },
-  {
-    id: 8,
-    name: "The Chairman",
-    category: "Suits" as Category,
-    description: "Double-breasted suit in charcoal wool",
-    gradient: "from-black to-emerald",
-  },
-  {
-    id: 9,
-    name: "The Maverick",
-    category: "Suits" as Category,
-    description: "Slim-fit emerald suit with peak lapels",
-    gradient: "from-emerald to-emerald-dark",
-  },
-  {
-    id: 10,
-    name: "The Pinnacle",
-    category: "Suits" as Category,
-    description: "Three-piece navy suit with gold buttons",
-    gradient: "from-emerald-dark to-black",
-  },
-  {
-    id: 11,
-    name: "Weekend Luxe",
-    category: "Casual" as Category,
-    description: "Relaxed-fit kaftan in premium cotton",
-    gradient: "from-emerald-light to-emerald",
-  },
-  {
-    id: 12,
-    name: "The Wanderer",
-    category: "Casual" as Category,
-    description: "Contemporary casual set with Igbo motifs",
-    gradient: "from-emerald to-emerald-light",
-  },
-  {
-    id: 13,
-    name: "The Lounger",
-    category: "Casual" as Category,
-    description: "Premium agbada-inspired lounge wear",
-    gradient: "from-emerald-dark to-emerald",
-  },
-  {
-    id: 14,
-    name: "Igbo Heritage",
-    category: "Traditional" as Category,
-    description: "Hand-woven isiagu with traditional cap",
-    gradient: "from-emerald to-black",
-  },
-  {
-    id: 15,
-    name: "The Chieftain",
-    category: "Traditional" as Category,
-    description: "Royal agbada with intricate embroidery",
-    gradient: "from-black to-emerald",
-  },
-  {
-    id: 16,
-    name: "Ancestral Pride",
-    category: "Traditional" as Category,
-    description: "Ceremonial attire with gold thread work",
-    gradient: "from-emerald-dark to-emerald",
-  },
-  {
-    id: 17,
-    name: "Boardroom Authority",
-    category: "Corporate" as Category,
-    description: "Power suit with structured shoulders",
-    gradient: "from-black to-emerald-dark",
-  },
-  {
-    id: 18,
-    name: "The Director",
-    category: "Corporate" as Category,
-    description: "Tailored blazer with matching trousers",
-    gradient: "from-emerald-dark to-black",
-  },
-  {
-    id: 19,
-    name: "Executive Edge",
-    category: "Corporate" as Category,
-    description: "Modern corporate ensemble with African print lining",
-    gradient: "from-emerald to-emerald-dark",
-  },
-];
+import {
+  CATEGORIES,
+  CATEGORY_INTRO,
+  COLLECTION_ITEMS,
+  type Category,
+  type CollectionItem,
+} from "@/data/collections";
+import { addItem, getItems } from "@/lib/inquiry-store";
+import { EditPencil } from "@/components/AdminEditOverlay";
 
 export default function CollectionsPage() {
-  const [filter, setFilter] = useState<Category>("All");
+  const [filter, setFilter] = useState<Category | "All">("All");
+  const [addedIds, setAddedIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    return new Set(getItems().map((i) => i.id));
+  });
+  const [flashId, setFlashId] = useState<string | null>(null);
 
   const visible = useMemo(() => {
-    if (filter === "All") return items;
-    return items.filter((item) => item.category === filter);
+    if (filter === "All") return COLLECTION_ITEMS;
+    return COLLECTION_ITEMS.filter((item) => item.category === filter);
   }, [filter]);
 
+  const handleAdd = (item: CollectionItem) => {
+    addItem({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      description: item.description,
+    });
+    setAddedIds((prev) => new Set(prev).add(item.id));
+    setFlashId(item.id);
+    window.setTimeout(() => setFlashId(null), 1400);
+  };
+
+  const intro = filter !== "All" ? CATEGORY_INTRO[filter] : null;
+
   return (
-    <section className="pt-28 pb-20 md:pt-36 md:pb-32 bg-cream min-h-screen">
+    <section className="pt-28 pb-20 md:pt-36 md:pb-32 bg-cream min-h-screen grain-overlay">
       <BackButton />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-3xl text-center">
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-xs uppercase tracking-[0.3em] text-emerald font-medium"
-          >
+          <p className="text-[10px] uppercase tracking-[0.42em] text-emerald font-medium">
             The Collection
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="font-heading text-4xl md:text-5xl font-bold text-black mt-4"
-          >
-            Our Collections
-          </motion.h1>
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="mt-6 mx-auto h-px w-16 bg-gradient-to-r from-transparent via-gold to-transparent"
-          />
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mt-6 text-black/70"
-          >
-            Browse our curated selection of luxury menswear. Every piece is
-            crafted with precision and designed for the modern Nigerian
-            gentleman.
-          </motion.p>
+          </p>
+          <h1 className="mt-4 font-heading text-4xl md:text-5xl font-semibold text-black">
+            Our Houses
+          </h1>
+          <div className="mt-6 mx-auto h-px w-16 bg-gradient-to-r from-transparent via-gold to-transparent" />
+          <p className="mt-6 text-black/70 leading-relaxed">
+            Six houses, one atelier. Browse the categories below - tap{" "}
+            <span className="font-medium text-emerald">Add to Inquiry</span> on
+            anything you&apos;d like to discuss, then send the whole list to us
+            on WhatsApp in one go.
+          </p>
+          <div className="mt-3 flex justify-center">
+            <EditPencil href="/admin/content" label="Edit collection copy" />
+          </div>
         </div>
 
         {/* Filter Chips */}
@@ -215,17 +73,18 @@ export default function CollectionsPage() {
           animate="visible"
           className="mt-10 flex flex-wrap justify-center gap-2.5 md:gap-3"
         >
-          {categories.map((cat) => {
+          {CATEGORIES.map((cat) => {
             const active = filter === cat;
             return (
               <motion.button
                 key={cat}
                 variants={staggerItem}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 type="button"
                 onClick={() => setFilter(cat)}
-                className={`whitespace-nowrap rounded-full border px-4 py-2 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-300 sm:text-xs ${
+                aria-pressed={active}
+                className={`min-h-[44px] whitespace-nowrap rounded-full border px-5 py-2 text-[11px] font-medium uppercase tracking-[0.22em] transition-all duration-300 ${
                   active
                     ? "border-emerald bg-emerald text-cream"
                     : "border-black/15 text-black/70 hover:border-emerald hover:text-emerald"
@@ -237,6 +96,22 @@ export default function CollectionsPage() {
           })}
         </motion.div>
 
+        {/* Category intro line */}
+        <AnimatePresence mode="wait">
+          {intro && (
+            <motion.p
+              key={filter}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+              className="mx-auto mt-7 max-w-2xl text-center font-heading text-lg italic text-emerald"
+            >
+              &ldquo;{intro}&rdquo;
+            </motion.p>
+          )}
+        </AnimatePresence>
+
         {/* Items Grid */}
         <motion.div
           layout
@@ -246,53 +121,82 @@ export default function CollectionsPage() {
           viewport={{ once: true }}
           className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {visible.map((item) => (
-            <motion.div
-              key={item.id}
-              layout
-              variants={staggerItem}
-              className="group"
-            >
+          {visible.map((item) => {
+            const added = addedIds.has(item.id);
+            const justAdded = flashId === item.id;
+            return (
               <motion.div
-                whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm"
+                key={item.id}
+                layout
+                variants={staggerItem}
+                className="group"
               >
-                <div
-                  className={`aspect-[4/3] bg-gradient-to-br ${item.gradient} relative`}
+                <motion.div
+                  whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm flex flex-col h-full"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute top-4 left-4">
-                    <span className="inline-block rounded-full bg-cream/90 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-emerald font-medium backdrop-blur">
-                      {item.category}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-heading text-lg font-bold text-black">
-                    {item.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-black/60">
-                    {item.description}
-                  </p>
-                  <a
-                    href={`https://wa.me/2349131272407?text=${encodeURIComponent(`Hello! I'm interested in "${item.name}" from your ${item.category} collection.`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 flex items-center gap-2 text-emerald"
+                  <div
+                    className={`relative aspect-[4/3] bg-gradient-to-br ${item.gradient}`}
                   >
-                    <span className="text-xs uppercase tracking-[0.15em] font-medium">
-                      Inquire Now
-                    </span>
-                    <ArrowRight
-                      size={12}
-                      className="transition-transform group-hover:translate-x-1"
-                    />
-                  </a>
-                </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute top-4 left-4">
+                      <span className="inline-block rounded-full bg-cream/90 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-emerald font-medium backdrop-blur">
+                        {item.category}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="font-heading text-xl font-semibold text-black">
+                      {item.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-black/60 leading-relaxed">
+                      {item.description}
+                    </p>
+                    <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+                      <a
+                        href={`https://wa.me/2349131272407?text=${encodeURIComponent(
+                          `Hello! I'm interested in "${item.name}" from your ${item.category} collection.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-emerald px-4 py-2.5 text-[10px] font-medium uppercase tracking-[0.22em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px]"
+                      >
+                        Order on WhatsApp
+                        <ArrowRight size={12} />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleAdd(item)}
+                        disabled={added && !justAdded}
+                        className={`flex-1 inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-[10px] font-medium uppercase tracking-[0.22em] transition-colors min-h-[44px] ${
+                          justAdded
+                            ? "border-gold bg-gold text-black"
+                            : added
+                            ? "border-emerald/30 bg-emerald/5 text-emerald/70 cursor-default"
+                            : "border-emerald/40 text-emerald hover:bg-emerald hover:text-cream hover:border-emerald"
+                        }`}
+                      >
+                        {justAdded ? (
+                          <>
+                            <Check size={12} /> Added!
+                          </>
+                        ) : added ? (
+                          <>
+                            <Check size={12} /> In inquiry
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={12} /> Add to inquiry
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          ))}
+            );
+          })}
         </motion.div>
 
         {visible.length === 0 && (

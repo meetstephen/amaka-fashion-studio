@@ -73,16 +73,24 @@ export default function AdminLookbookPage() {
   };
 
   const handleUploadPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage
+    // TODO: Upload to Supabase Storage (loop)
     const files = e.target.files;
     if (files && files.length > 0) {
-      const newItem: LookbookItem = {
-        id: Date.now(),
-        title: files[0].name.replace(/\.[^/.]+$/, ""),
+      const palette = [
+        "bg-gradient-to-br from-emerald via-emerald-dark to-black",
+        "bg-gradient-to-br from-black via-gray-900 to-emerald-dark",
+        "bg-gradient-to-br from-emerald-dark via-black to-gray-900",
+        "bg-gradient-to-br from-yellow-900 via-emerald-dark to-black",
+        "bg-gradient-to-br from-emerald via-green-900 to-black",
+        "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30",
+      ];
+      const newItems: LookbookItem[] = Array.from(files).map((f, idx) => ({
+        id: Date.now() + idx,
+        title: f.name.replace(/\.[^/.]+$/, ""),
         caption: "",
-        gradient: "bg-gradient-to-br from-gray-400 to-gray-600",
-      };
-      setItems([newItem, ...items]);
+        gradient: palette[idx % palette.length],
+      }));
+      setItems([...newItems, ...items]);
     }
     e.target.value = "";
   };
@@ -120,16 +128,32 @@ export default function AdminLookbookPage() {
           </button>
           <label
             className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
-            aria-label="Upload photo"
+            aria-label="Upload photos from gallery (multiple supported)"
           >
             <Upload size={18} />
-            Upload Photo
+            Upload photos
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleUploadPhoto}
               className="hidden"
-              aria-label="Choose lookbook photo"
+              aria-label="Choose one or more lookbook photos"
+            />
+          </label>
+          <label
+            className="inline-flex items-center gap-2 px-4 min-h-[48px] border border-emerald/30 text-emerald rounded-lg hover:bg-emerald/5 transition-colors cursor-pointer font-medium text-sm"
+            aria-label="Take photo with camera"
+          >
+            <Upload size={16} />
+            Camera
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleUploadPhoto}
+              className="hidden"
+              aria-label="Capture lookbook photo with camera"
             />
           </label>
         </div>

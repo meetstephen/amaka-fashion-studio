@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Image,
+  Image as ImageIcon,
   FileText,
   BookOpen,
   Star,
@@ -13,14 +13,28 @@ import {
   Menu,
   X,
   Home,
+  BarChart3,
+  Megaphone,
+  MessageSquareText,
+  Quote,
+  ClipboardList,
+  CalendarDays,
+  Users,
 } from "lucide-react";
 
 const navLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/images", label: "Images", icon: Image },
+  { href: "/admin/inquiries", label: "Inquiries", icon: ClipboardList },
+  { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
+  { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/images", label: "Images", icon: ImageIcon },
   { href: "/admin/content", label: "Content", icon: FileText },
   { href: "/admin/lookbook", label: "Lookbook", icon: BookOpen },
   { href: "/admin/featured", label: "Featured", icon: Star },
+  { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
+  { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
+  { href: "/admin/templates", label: "Templates", icon: MessageSquareText },
 ];
 
 export default function AdminNav() {
@@ -28,7 +42,6 @@ export default function AdminNav() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Don't show nav on login page
   if (pathname === "/admin/login") return null;
 
   const handleLogout = async () => {
@@ -37,18 +50,18 @@ export default function AdminNav() {
   };
 
   return (
-    <nav className="bg-black text-cream border-b border-emerald/20">
+    <nav className="bg-black text-cream border-b border-emerald/20 sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Title */}
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-heading font-bold text-gold">
-              Admin Panel
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-base md:text-lg font-heading font-semibold text-gold tracking-wide truncate">
+              Amaka · Admin
             </h1>
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1 overflow-x-auto">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive =
@@ -58,13 +71,13 @@ export default function AdminNav() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 whitespace-nowrap px-3 py-2 rounded-md text-xs font-medium uppercase tracking-[0.18em] transition-colors ${
                     isActive
                       ? "bg-emerald text-cream"
                       : "text-cream/70 hover:text-cream hover:bg-emerald/20"
                   }`}
                 >
-                  <Icon size={16} />
+                  <Icon size={14} />
                   {link.label}
                 </Link>
               );
@@ -75,29 +88,28 @@ export default function AdminNav() {
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="hidden md:flex items-center gap-1 px-3 py-2 text-sm text-cream/70 hover:text-cream transition-colors"
+              className="hidden lg:flex items-center gap-1 px-3 py-2 text-xs uppercase tracking-[0.18em] text-cream/70 hover:text-cream transition-colors"
               aria-label="Back to site"
             >
-              <Home size={16} />
+              <Home size={14} />
               <span>Site</span>
             </Link>
             <button
               onClick={handleLogout}
-              className="hidden md:flex items-center gap-1 px-3 py-2 text-sm text-cream/70 hover:text-red-400 transition-colors min-h-[44px]"
+              className="hidden lg:flex items-center gap-1 px-3 py-2 text-xs uppercase tracking-[0.18em] text-cream/70 hover:text-red-400 transition-colors min-h-[44px]"
               aria-label="Logout"
             >
-              <LogOut size={16} />
+              <LogOut size={14} />
               <span>Logout</span>
             </button>
 
-            {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden grid h-11 w-11 place-items-center rounded-md text-cream/70 hover:text-cream"
+              className="lg:hidden grid h-11 w-11 place-items-center rounded-md text-cream/70 hover:text-cream"
               aria-label="Toggle menu"
               aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
@@ -105,8 +117,8 @@ export default function AdminNav() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-emerald/20 bg-black/95">
-          <div className="px-4 py-3 space-y-1">
+        <div className="lg:hidden border-t border-emerald/20 bg-black/95">
+          <div className="px-4 py-3 space-y-1 max-h-[70vh] overflow-y-auto">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive =

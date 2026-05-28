@@ -1,9 +1,19 @@
-<svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="20" cy="20" r="19" stroke="#D4AF37" stroke-width="1.5"/>
-  <circle cx="20" cy="20" r="16" stroke="#006B3F" stroke-width="0.5" opacity="0.5"/>
-  <path d="M20 8L28 30H24.5L23 26H17L15.5 30H12L20 8Z" fill="#006B3F"/>
-  <path d="M18 23H22L20 15L18 23Z" fill="#FDF8F0"/>
-  <path d="M10 14H14V15.5H11.5V19H13.5V20.5H11.5V26H10V14Z" fill="#D4AF37" opacity="0.8"/>
-  <path d="M27 14L31 26H29.5L28.5 23.5H26L25 26H23.5L27 14Z" fill="#D4AF37" opacity="0.8"/>
-  <path d="M26.5 21.5H28L27.25 18L26.5 21.5Z" fill="#FDF8F0"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0C384"/>
+      <stop offset="60%" stop-color="#C9A961"/>
+      <stop offset="100%" stop-color="#9F8345"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="10" fill="#0B3D2E"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="url(#g)" stroke-width="0.6" opacity="0.55"/>
+  <!-- Stylized A monogram with thread/needle motif -->
+  <path d="M32 12 L48 50 H42 L39 42 H25 L22 50 H16 Z" fill="url(#g)"/>
+  <path d="M27 36 H37 L32 22 Z" fill="#0B3D2E"/>
+  <!-- Crossbar -->
+  <rect x="26" y="33" width="12" height="1.4" fill="#0B3D2E"/>
+  <!-- Needle highlight -->
+  <line x1="32" y1="6" x2="32" y2="13" stroke="url(#g)" stroke-width="0.8" stroke-linecap="round"/>
+  <circle cx="32" cy="5.5" r="1" fill="url(#g)"/>
 </svg>
