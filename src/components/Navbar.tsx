@@ -112,72 +112,87 @@ export default function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="md:hidden fixed inset-0 top-20 z-40"
+            className="md:hidden fixed inset-0 z-50 overflow-y-auto"
+            style={{
+              backgroundColor: "#0F0F0F",
+              WebkitFontSmoothing: "antialiased",
+              MozOsxFontSmoothing: "grayscale",
+            }}
           >
-            {/* Solid emerald-to-black backdrop guarantees contrast on every page */}
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -20, opacity: 0 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="bg-gradient-to-b from-black via-emerald-dark to-black h-full grain-overlay"
-            >
-              <nav className="px-6 pt-8 pb-12">
-                <ul className="space-y-1">
-                  {navLinks.map((link, idx) => {
-                    const active = pathname === link.href;
-                    return (
-                      <motion.li
-                        key={link.href}
-                        initial={{ x: -16, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.05 + idx * 0.04 }}
+            {/* Top bar with brand + close button */}
+            <div className="flex items-center justify-between h-20 px-6 border-b border-gold/15 sticky top-0 bg-[#0F0F0F] z-10">
+              <span className="font-heading text-sm font-semibold tracking-[0.28em] uppercase text-gold-light">
+                Amaka <span className="italic font-light">Fashion</span> Atelier
+              </span>
+              <button
+                onClick={() => setIsOpen(false)}
+                aria-label="Close menu"
+                className="grid place-items-center h-11 w-11 rounded-full border border-gold/40 text-gold-light hover:bg-emerald hover:text-cream transition-colors"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Nav links */}
+            <nav className="px-6 pt-8 pb-12">
+              <ul className="space-y-1">
+                {navLinks.map((link, idx) => {
+                  const active = pathname === link.href;
+                  return (
+                    <motion.li
+                      key={link.href}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.06 + idx * 0.04, duration: 0.3 }}
+                    >
+                      <Link
+                        href={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center justify-between border-b border-gold/15 py-5 text-lg font-semibold uppercase tracking-[0.28em] min-h-[56px] transition-colors ${
+                          active
+                            ? "text-gold"
+                            : "text-cream hover:text-gold-light"
+                        }`}
                       >
-                        <Link
-                          href={link.href}
-                          onClick={() => setIsOpen(false)}
-                          className={`flex items-center justify-between border-b border-gold/15 py-5 text-lg uppercase tracking-[0.28em] font-medium min-h-[44px] transition-colors ${
-                            active ? "text-gold" : "text-cream hover:text-gold-light"
+                        <span>{link.label}</span>
+                        <span
+                          aria-hidden
+                          className={`text-xs tracking-[0.4em] font-medium ${
+                            active ? "text-gold" : "text-gold/40"
                           }`}
                         >
-                          <span>{link.label}</span>
-                          <span
-                            aria-hidden
-                            className={`text-xs tracking-[0.4em] ${
-                              active ? "text-gold" : "text-gold/40"
-                            }`}
-                          >
-                            {String(idx + 1).padStart(2, "0")}
-                          </span>
-                        </Link>
-                      </motion.li>
-                    );
-                  })}
-                </ul>
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
+                      </Link>
+                    </motion.li>
+                  );
+                })}
+              </ul>
 
-                {/* Mobile sub-CTA */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="mt-10 rounded-2xl border border-gold/25 bg-black/30 p-5"
+              {/* Bespoke enquiries CTA */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-10 rounded-2xl border border-gold/25 bg-emerald-dark/40 p-5"
+              >
+                <p className="text-[10px] uppercase tracking-[0.4em] text-gold/70 font-medium">
+                  Bespoke enquiries
+                </p>
+                <p className="mt-2 font-heading text-xl text-cream italic">
+                  A piece is always closer than you think.
+                </p>
+                <a
+                  href="https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier%2C%20I%27d%20like%20to%20enquire"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-black transition-all hover:bg-gold-light min-h-[44px]"
+                  onClick={() => setIsOpen(false)}
                 >
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-gold/70">Bespoke enquiries</p>
-                  <p className="mt-2 font-heading text-xl text-cream italic">
-                    A piece is always closer than you think.
-                  </p>
-                  <a
-                    href="https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier%2C%20I%27d%20like%20to%20enquire"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-xs font-medium uppercase tracking-[0.18em] text-black transition-all hover:bg-gold-light"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Book on WhatsApp
-                  </a>
-                </motion.div>
-              </nav>
-            </motion.div>
+                  Book on WhatsApp
+                </a>
+              </motion.div>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>

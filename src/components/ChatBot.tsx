@@ -142,7 +142,7 @@ export default function ChatBot() {
             // Mobile: nearly full-screen bottom sheet. Desktop: anchored card.
             className="
               fixed z-50 flex flex-col overflow-hidden border border-black/10 bg-cream shadow-2xl
-              left-2 right-2 bottom-2 top-12 rounded-3xl
+              left-2 right-2 bottom-2 top-24 rounded-3xl
               sm:left-auto sm:right-6 sm:bottom-40 sm:top-auto
               sm:h-[min(560px,72vh)] sm:w-[min(380px,calc(100vw-3rem))]
               sm:rounded-2xl
