@@ -13,7 +13,6 @@ import {
   type CollectionItem,
 } from "@/data/collections";
 import { addItem, getItems } from "@/lib/inquiry-store";
-import { EditPencil } from "@/components/AdminEditOverlay";
 
 export default function CollectionsPage() {
   const [filter, setFilter] = useState<Category | "All">("All");
@@ -61,9 +60,6 @@ export default function CollectionsPage() {
             anything you&apos;d like to discuss, then send the whole list to us
             on WhatsApp in one go.
           </p>
-          <div className="mt-3 flex justify-center">
-            <EditPencil href="/admin/content" label="Edit collection copy" />
-          </div>
         </div>
 
         {/* Filter Chips */}

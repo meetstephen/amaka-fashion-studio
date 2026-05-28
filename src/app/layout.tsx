@@ -11,8 +11,6 @@ import ScrollProgress from "@/components/ScrollProgress";
 import VisitorTracker from "@/components/VisitorTracker";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import InquiryDrawer from "@/components/InquiryDrawer";
-import AdminEditOverlay from "@/components/AdminEditOverlay";
-import { AdminAuthProvider } from "@/components/AdminAuthProvider";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -139,20 +137,17 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-cream text-black">
-        <AdminAuthProvider>
-          <AnnouncementBar />
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <ScrollProgress />
-          <ChatBot />
-          <WhatsAppButton />
-          <ScrollToTop />
-          <InquiryDrawer />
-          <AdminEditOverlay />
-          <VisitorTracker />
-          <Analytics />
-        </AdminAuthProvider>
+        <AnnouncementBar />
+        <Navbar />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <ScrollProgress />
+        <ChatBot />
+        <WhatsAppButton />
+        <ScrollToTop />
+        <InquiryDrawer />
+        <VisitorTracker />
+        <Analytics />
       </body>
     </html>
   );

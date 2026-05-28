@@ -5,9 +5,8 @@ import { verifySessionToken } from "@/lib/session";
 /**
  * GET /api/admin/me
  *
- * Lightweight auth check used by client-side components (e.g.
- * AdminEditOverlay) to decide whether to render admin-only UI.
- * Always returns JSON; never redirects.
+ * Lightweight auth check used by client-side components to decide
+ * whether to render admin-only UI. Always returns JSON; never redirects.
  */
 export async function GET() {
   const cookieStore = await cookies();
