@@ -83,6 +83,7 @@ export default function Footer() {
                 { href: "/lookbook", label: "Lookbook" },
                 { href: "/about", label: "About" },
                 { href: "/contact", label: "Contact" },
+                { href: "/measurements", label: "Submit Measurements" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link
