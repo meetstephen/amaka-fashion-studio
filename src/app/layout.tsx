@@ -12,6 +12,7 @@ import VisitorTracker from "@/components/VisitorTracker";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import InquiryDrawer from "@/components/InquiryDrawer";
 import AdminEditOverlay from "@/components/AdminEditOverlay";
+import { AdminAuthProvider } from "@/components/AdminAuthProvider";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -42,6 +43,19 @@ export const metadata: Metadata = {
     "Nigerian gentleman",
   ],
   metadataBase: new URL("https://amaka-fashion-atelier.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
     title: "Amaka Fashion Atelier | Bespoke Menswear · Abakaliki",
     description:
@@ -57,10 +71,53 @@ export const metadata: Metadata = {
       "Bespoke menswear hand-finished in Abakaliki. Where heritage meets distinction.",
   },
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0B3D2E",
+};
+
+const localBusinessJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": "https://amaka-fashion-atelier.vercel.app/#atelier",
+  name: "Amaka Fashion Atelier",
+  description:
+    "An atelier in Abakaliki crafting bespoke senator wear, suits, traditional and corporate menswear. Italian wool, Egyptian cotton, hand-finished. Where heritage meets distinction.",
+  url: "https://amaka-fashion-atelier.vercel.app",
+  telephone: "+234 913 127 2407",
+  priceRange: "$$$",
+  image: "https://amaka-fashion-atelier.vercel.app/favicon.svg",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Abakaliki",
+    addressRegion: "Ebonyi State",
+    addressCountry: "NG",
+  },
+  areaServed: {
+    "@type": "Country",
+    name: "Nigeria",
+  },
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "09:00",
+      closes: "18:00",
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: "Saturday",
+      opens: "10:00",
+      closes: "16:00",
+    },
+  ],
+  // TODO: populate once social channels are live
+  sameAs: [],
 };
 
 export default function RootLayout({
@@ -73,19 +130,29 @@ export default function RootLayout({
       lang="en"
       className={`${cormorant.variable} ${jost.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(localBusinessJsonLd),
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-cream text-black">
-        <AnnouncementBar />
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <ScrollProgress />
-        <ChatBot />
-        <WhatsAppButton />
-        <ScrollToTop />
-        <InquiryDrawer />
-        <AdminEditOverlay />
-        <VisitorTracker />
-        <Analytics />
+        <AdminAuthProvider>
+          <AnnouncementBar />
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <ScrollProgress />
+          <ChatBot />
+          <WhatsAppButton />
+          <ScrollToTop />
+          <InquiryDrawer />
+          <AdminEditOverlay />
+          <VisitorTracker />
+          <Analytics />
+        </AdminAuthProvider>
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, Settings, ChevronUp, ChevronDown } from "lucide-react";
+import { useAdminAuth } from "@/components/AdminAuthProvider";
 
 const EDIT_MODE_KEY = "admin-edit-mode-active";
 
@@ -51,33 +52,17 @@ const PAGE_MAP: PageMapping[] = [
 
 /**
  * Floating admin "edit mode" widget.
- * Renders only for authenticated admins; checks /api/admin/me on mount.
- * Toggling sets a localStorage flag that other components (EditPencil) can
- * read to render quick-edit affordances.
+ * Renders only for authenticated admins (verified server-side via
+ * AdminAuthProvider). The localStorage flag alone is insufficient.
  */
 export default function AdminEditOverlay() {
   const pathname = usePathname();
-  const [authed, setAuthed] = useState<boolean | null>(null);
+  const { authenticated } = useAdminAuth();
   const [editMode, setEditMode] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
   // Don't render the overlay on /admin pages themselves
   const isAdminRoute = pathname?.startsWith("/admin") ?? false;
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/admin/me", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : { authenticated: false }))
-      .then((d) => {
-        if (!cancelled) setAuthed(Boolean(d?.authenticated));
-      })
-      .catch(() => {
-        if (!cancelled) setAuthed(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -94,7 +79,7 @@ export default function AdminEditOverlay() {
     }
   };
 
-  if (!authed || isAdminRoute) return null;
+  if (!authenticated || isAdminRoute) return null;
 
   const mapping = PAGE_MAP.find((m) => m.match(pathname || "/")) || {
     name: "Site",
@@ -185,8 +170,10 @@ export default function AdminEditOverlay() {
 }
 
 /**
- * Subtle gold pencil that appears next to editable areas when admin
- * edit mode is active. Renders nothing when off.
+ * Subtle gold pencil that appears next to editable areas when an
+ * authenticated admin has toggled edit mode on. Renders nothing
+ * unless BOTH server-verified auth AND the localStorage flag are
+ * present, so a spoofed flag alone reveals nothing.
  */
 export function EditPencil({
   href,
@@ -197,6 +184,7 @@ export function EditPencil({
   label?: string;
   className?: string;
 }) {
+  const { authenticated } = useAdminAuth();
   const [active, setActive] = useState(false);
 
   useEffect(() => {
@@ -213,7 +201,9 @@ export function EditPencil({
       );
   }, []);
 
-  if (!active) return null;
+  // Both gates must be open. Without server-verified auth, even a
+  // spoofed localStorage flag reveals nothing.
+  if (!authenticated || !active) return null;
   return (
     <Link
       href={href}
