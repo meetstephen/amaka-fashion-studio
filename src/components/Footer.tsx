@@ -83,7 +83,6 @@ export default function Footer() {
                 { href: "/lookbook", label: "Lookbook" },
                 { href: "/about", label: "About" },
                 { href: "/contact", label: "Contact" },
-                { href: "/measurements", label: "Submit Measurements" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link
@@ -95,6 +94,16 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+            {/* Measurements CTA */}
+            <div className="mt-5 pt-4 border-t border-cream/10">
+              <Link
+                href="/measurements"
+                className="inline-flex min-h-[44px] items-center gap-2 text-gold hover:text-gold-light transition-colors text-sm font-medium py-1"
+              >
+                <span className="inline-block w-4 h-4 border border-gold/60 rounded-sm text-center text-[9px] leading-4">&#x1F4CF;</span>
+                Submit Measurements
+              </Link>
+            </div>
           </div>
 
           {/* Contact Column */}

@@ -9,6 +9,7 @@ interface LightboxItem {
   title: string;
   caption: string;
   gradient: string;
+  image_url?: string | null;
 }
 
 interface LightboxProps {
@@ -230,8 +231,16 @@ export default function Lightbox({
             <motion.div
               animate={{ scale }}
               transition={{ type: "spring", stiffness: 200, damping: 25 }}
-              className={`absolute inset-0 ${item.gradient}`}
-            />
+              className={`absolute inset-0 ${item.image_url ? '' : item.gradient}`}
+            >
+              {item.image_url && (
+                <img
+                  src={item.image_url}
+                  alt={item.title}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              )}
+            </motion.div>
 
             {/* Text overlay - hides while zoomed for clarity */}
             {scale === 1 && (

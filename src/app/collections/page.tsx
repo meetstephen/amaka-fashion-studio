@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Plus, Check } from "lucide-react";
+import { ArrowRight, Plus, Check, Ruler } from "lucide-react";
+import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 import {
@@ -200,6 +201,33 @@ export default function CollectionsPage() {
             No pieces in this category yet. Check back soon!
           </div>
         )}
+
+        {/* Measurements CTA Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mt-16 rounded-2xl border border-emerald/10 bg-white p-6 md:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 shadow-sm"
+        >
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-emerald/10">
+            <Ruler size={22} className="text-emerald" />
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <h3 className="font-heading text-lg font-semibold text-black">
+              Ready to be measured?
+            </h3>
+            <p className="mt-1 text-sm text-black/60">
+              Submit your measurements online so we can craft your perfect fit.
+            </p>
+          </div>
+          <Link
+            href="/measurements"
+            className="inline-flex items-center gap-2 rounded-full bg-emerald px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px] whitespace-nowrap"
+          >
+            Submit Measurements <ArrowRight size={12} />
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import BackButton from "@/components/BackButton";
 import Lightbox from "@/components/Lightbox";
 import { staggerContainer, staggerItem } from "@/lib/animations";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
-// TODO: Replace mock data with Supabase query - fetch from 'lookbook' table
-// TODO: Add real-time subscription for admin updates
-const lookbookItems = [
+interface LookbookItem {
+  id: number;
+  title: string;
+  caption: string;
+  gradient: string;
+  image_url?: string | null;
+}
+
+const defaultLookbookItems: LookbookItem[] = [
   {
     id: 1,
     title: "Royal Emerald Agbada",
@@ -84,9 +91,30 @@ const lookbookItems = [
 ];
 
 export default function LookbookPage() {
-  // TODO: Replace with Supabase real-time data fetching
+  const [lookbookItems, setLookbookItems] = useState<LookbookItem[]>(defaultLookbookItems);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    async function loadFromSupabase() {
+      if (!isSupabaseConfigured() || !supabase) return;
+      const { data, error } = await supabase
+        .from("lookbook")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data && data.length > 0) {
+        const items: LookbookItem[] = data.map((row, idx) => ({
+          id: row.id ?? idx + 1,
+          title: row.title || `Look ${idx + 1}`,
+          caption: row.caption || row.description || "",
+          gradient: row.gradient || defaultLookbookItems[idx % defaultLookbookItems.length].gradient,
+          image_url: row.image_url || null,
+        }));
+        setLookbookItems(items);
+      }
+    }
+    loadFromSupabase();
+  }, []);
 
   const openLightbox = (index: number) => {
     setCurrentIndex(index);
@@ -161,11 +189,18 @@ export default function LookbookPage() {
               onClick={() => openLightbox(index)}
             >
               <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
-                {/* Gradient placeholder */}
-                {/* TODO: Replace with Supabase Storage image URLs */}
-                <div
-                  className={`absolute inset-0 ${item.gradient} transition-transform duration-500 group-hover:scale-105`}
-                />
+                {/* Show uploaded image or gradient fallback */}
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div
+                    className={`absolute inset-0 ${item.gradient} transition-transform duration-500 group-hover:scale-105`}
+                  />
+                )}
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
               </div>
