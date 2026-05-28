@@ -63,7 +63,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-3 group" aria-label="Amaka Fashion Atelier home">
-            <Logo wordmarkClass="text-gold-light hidden sm:inline" showWordmark />
+            <Logo wordmarkClass="text-gold-light" showWordmark />
           </Link>
 
           {/* Desktop Navigation */}

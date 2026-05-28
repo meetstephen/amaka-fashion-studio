@@ -76,6 +76,12 @@ export default function AboutPage() {
                   </div>
                 </div>
               </div>
+              {/* TODO: This will display the owner's photo when Supabase storage is connected */}
+              <div className="absolute inset-0 flex items-end justify-center pb-4 pointer-events-none">
+                <span className="text-[9px] uppercase tracking-[0.3em] text-cream/40 bg-black/20 rounded-full px-3 py-1 backdrop-blur-sm">
+                  Tap to add photo
+                </span>
+              </div>
               <div className="absolute inset-0 -translate-x-3 translate-y-3 rounded-3xl border border-gold/30" />
             </div>
           </motion.div>

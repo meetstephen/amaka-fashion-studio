@@ -96,7 +96,7 @@ export default function Logo({
       {renderWord && (
         <span className="leading-tight">
           <span
-            className={`block font-heading text-[0.95rem] sm:text-base font-semibold tracking-[0.32em] uppercase ${wordmarkClass}`}
+            className={`block font-heading text-[0.7rem] sm:text-base font-semibold tracking-[0.2em] sm:tracking-[0.32em] uppercase ${wordmarkClass}`}
           >
             Amaka <span className="font-light italic tracking-wider">Fashion</span> Atelier
           </span>

@@ -158,8 +158,25 @@ export default function AdminImagesPage() {
             key={image.id}
             className="bg-white rounded-xl border border-emerald/10 overflow-hidden shadow-sm"
           >
-            {/* Thumbnail */}
-            <div className={`aspect-video ${image.gradient}`} />
+            {/* Thumbnail - tap to edit on mobile */}
+            <div
+              className={`aspect-video ${image.gradient} relative cursor-pointer group`}
+              onClick={() => { if (editingId !== image.id) startEdit(image); }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (editingId !== image.id) startEdit(image); } }}
+              aria-label={`Tap to edit ${image.name}`}
+            >
+              {/* Mobile tap-to-edit indicator */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <span className="text-cream/0 group-hover:text-cream/90 text-xs uppercase tracking-widest font-medium transition-colors lg:opacity-100 opacity-70 pointer-events-none">
+                  <span className="bg-black/50 rounded-full px-3 py-1.5 backdrop-blur-sm inline-flex items-center gap-1.5">
+                    <Pencil size={12} />
+                    Tap to edit
+                  </span>
+                </span>
+              </div>
+            </div>
 
             {/* Info */}
             <div className="p-4">
