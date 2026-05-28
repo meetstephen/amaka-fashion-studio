@@ -7,7 +7,6 @@ import HeroCarousel from "@/components/HeroCarousel";
 import ProcessSection from "@/components/ProcessSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import NewsletterCTA from "@/components/NewsletterCTA";
-import { EditPencil } from "@/components/AdminEditOverlay";
 import {
   fadeInLeft,
   fadeInRight,
@@ -72,12 +71,9 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: 0.2 }}
               >
-                <div className="flex items-center gap-3">
-                  <p className="text-[10px] uppercase tracking-[0.42em] text-gold font-medium">
-                    Featured · This Season
-                  </p>
-                  <EditPencil href="/admin/featured" label="Edit featured" />
-                </div>
+                <p className="text-[10px] uppercase tracking-[0.42em] text-gold font-medium">
+                  Featured · This Season
+                </p>
                 <h2 className="mt-4 font-heading text-3xl md:text-5xl font-semibold text-cream">
                   The Harmattan Edit
                 </h2>
@@ -167,12 +163,9 @@ export default function HomePage() {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              <div className="flex items-center gap-3">
-                <p className="text-[10px] uppercase tracking-[0.42em] text-gold font-medium">
-                  Our Heritage
-                </p>
-                <EditPencil href="/admin/content" label="Edit story" />
-              </div>
+              <p className="text-[10px] uppercase tracking-[0.42em] text-gold font-medium">
+                Our Heritage
+              </p>
               <h2 className="mt-4 font-heading text-4xl md:text-5xl font-semibold text-cream">
                 Where tradition meets <span className="italic text-gold">modern luxury</span>
               </h2>

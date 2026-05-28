@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Award, Gem, Quote, Scissors, Star } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import NewsletterCTA from "@/components/NewsletterCTA";
-import { EditPencil } from "@/components/AdminEditOverlay";
 import {
   fadeInUp,
   fadeInLeft,
@@ -54,9 +53,6 @@ export default function AboutPage() {
             Our Story
           </h1>
           <div className="mt-6 mx-auto h-px w-16 bg-gradient-to-r from-transparent via-gold to-transparent" />
-          <div className="mt-3 flex justify-center">
-            <EditPencil href="/admin/content" label="Edit about page" />
-          </div>
         </div>
 
         {/* Brand Story */}
