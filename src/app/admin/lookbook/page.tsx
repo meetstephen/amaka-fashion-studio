@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Trash2, Plus } from "lucide-react";
+import { Upload, Trash2, Plus, Camera, Check } from "lucide-react";
 import Link from "next/link";
 
 interface LookbookItem {
@@ -56,6 +56,7 @@ export default function AdminLookbookPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newCaption, setNewCaption] = useState("");
+  const [replaceFlashId, setReplaceFlashId] = useState<number | null>(null);
 
   const handleAddItem = () => {
     if (!newTitle.trim()) return;
@@ -105,6 +106,16 @@ export default function AdminLookbookPage() {
     setItems(items.filter((item) => item.id !== id));
   };
 
+  const handleReplace = (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    // TODO: Upload to Supabase Storage and update record
+    const file = e.target.files?.[0];
+    if (!file) return;
+    console.log("Would replace lookbook item", id, "with", file.name);
+    setReplaceFlashId(id);
+    setTimeout(() => setReplaceFlashId(null), 1500);
+    e.target.value = "";
+  };
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -113,7 +124,8 @@ export default function AdminLookbookPage() {
             Lookbook Manager
           </h2>
           <p className="text-black/60 text-sm mt-1">
-            Manage lookbook gallery photos and descriptions
+            Manage lookbook gallery photos and descriptions. Tap the badge on
+            any thumbnail to swap its photo.
           </p>
         </div>
 
@@ -205,8 +217,46 @@ export default function AdminLookbookPage() {
             key={item.id}
             className="bg-white rounded-xl border border-emerald/10 overflow-hidden shadow-sm"
           >
-            {/* Gradient thumbnail */}
-            <div className={`aspect-[4/3] ${item.gradient}`} />
+            {/* Thumbnail with always-visible "Tap to replace" badge */}
+            <div className="relative">
+              <div className={`aspect-[4/3] ${item.gradient}`} />
+
+              {/* Bottom gradient overlay so badge always has contrast */}
+              <div
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"
+              />
+
+              {/* "Replaced!" flash feedback */}
+              {replaceFlashId === item.id && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-emerald px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cream shadow-lg"
+                >
+                  <Check size={12} />
+                  Replaced!
+                </div>
+              )}
+
+              {/* Always-visible "Tap to replace" badge */}
+              <label
+                htmlFor={`replace-look-${item.id}`}
+                className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-emerald/90 backdrop-blur-sm px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-cream cursor-pointer hover:bg-emerald transition-colors shadow-lg min-h-[36px]"
+                aria-label={`Replace photo for ${item.title}`}
+              >
+                <Camera size={12} />
+                Tap to replace
+              </label>
+              <input
+                id={`replace-look-${item.id}`}
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleReplace(item.id, e)}
+                className="hidden"
+                aria-label={`Choose replacement file for ${item.title}`}
+              />
+            </div>
 
             {/* Editable fields */}
             <div className="p-4 space-y-3">

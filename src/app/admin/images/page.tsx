@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Pencil, Trash2, X, Check } from "lucide-react";
+import { Upload, Pencil, Trash2, X, Check, Camera } from "lucide-react";
 import Link from "next/link";
 
 interface ImageItem {
@@ -57,6 +57,7 @@ export default function AdminImagesPage() {
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [replaceFlashId, setReplaceFlashId] = useState<number | null>(null);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     // TODO: Upload to Supabase Storage (loop with batching)
@@ -77,6 +78,18 @@ export default function AdminImagesPage() {
       }));
       setImages([...newImages, ...images]);
     }
+    e.target.value = "";
+  };
+
+  const handleReplace = (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    // TODO: Upload to Supabase Storage and update record
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // For now, log - in real implementation: upload file, get URL, update image.image_url
+    console.log("Would replace image", id, "with", file.name);
+    // Visual feedback - show "Replaced!" briefly
+    setReplaceFlashId(id);
+    setTimeout(() => setReplaceFlashId(null), 1500);
     e.target.value = "";
   };
 
@@ -112,7 +125,8 @@ export default function AdminImagesPage() {
             Image Management
           </h2>
           <p className="text-black/60 text-sm mt-1">
-            Upload and manage all site images. Pick multiple at once on mobile.
+            Upload, rename and replace site images. Tap the badge on any
+            thumbnail to replace it. Multi-select supported on mobile.
           </p>
         </div>
 
@@ -158,24 +172,45 @@ export default function AdminImagesPage() {
             key={image.id}
             className="bg-white rounded-xl border border-emerald/10 overflow-hidden shadow-sm"
           >
-            {/* Thumbnail - tap to edit on mobile */}
-            <div
-              className={`aspect-video ${image.gradient} relative cursor-pointer group`}
-              onClick={() => { if (editingId !== image.id) startEdit(image); }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (editingId !== image.id) startEdit(image); } }}
-              aria-label={`Tap to edit ${image.name}`}
-            >
-              {/* Mobile tap-to-edit indicator */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <span className="text-cream/0 group-hover:text-cream/90 text-xs uppercase tracking-widest font-medium transition-colors lg:opacity-100 opacity-70 pointer-events-none">
-                  <span className="bg-black/50 rounded-full px-3 py-1.5 backdrop-blur-sm inline-flex items-center gap-1.5">
-                    <Pencil size={12} />
-                    Tap to edit
-                  </span>
-                </span>
-              </div>
+            {/* Thumbnail with always-visible "Tap to replace" badge */}
+            <div className="relative">
+              <div className={`aspect-video ${image.gradient}`} />
+
+              {/* Bottom gradient overlay so badge always has contrast */}
+              <div
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"
+              />
+
+              {/* "Replaced!" flash feedback */}
+              {replaceFlashId === image.id && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-emerald px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cream shadow-lg"
+                >
+                  <Check size={12} />
+                  Replaced!
+                </div>
+              )}
+
+              {/* Always-visible "Tap to replace" badge - mobile-first */}
+              <label
+                htmlFor={`replace-${image.id}`}
+                className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-emerald/90 backdrop-blur-sm px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-cream cursor-pointer hover:bg-emerald transition-colors shadow-lg min-h-[36px]"
+                aria-label={`Replace image ${image.name}`}
+              >
+                <Camera size={12} />
+                Tap to replace
+              </label>
+              <input
+                id={`replace-${image.id}`}
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleReplace(image.id, e)}
+                className="hidden"
+                aria-label={`Choose replacement file for ${image.name}`}
+              />
             </div>
 
             {/* Info */}
@@ -234,10 +269,10 @@ export default function AdminImagesPage() {
                     <button
                       onClick={() => startEdit(image)}
                       className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1 border border-emerald/20 text-emerald rounded-md text-sm hover:bg-emerald/5 transition-colors"
-                      aria-label={`Edit ${image.name}`}
+                      aria-label={`Rename ${image.name}`}
                     >
                       <Pencil size={14} />
-                      Edit
+                      Rename
                     </button>
                     {deleteConfirmId === image.id ? (
                       <div className="flex-1 flex gap-1">
