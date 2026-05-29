@@ -14,14 +14,8 @@ interface LookbookItem {
   image_url?: string;
 }
 
-const initialItems: LookbookItem[] = [
-  { id: 1, title: "Royal Emerald Agbada", caption: "Flowing silhouette in deep emerald, embroidered with gold thread", gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black" },
-  { id: 2, title: "Midnight Senator", caption: "Tailored precision in black with gold button accents", gradient: "bg-gradient-to-br from-black via-gray-900 to-emerald-dark" },
-  { id: 3, title: "Heritage Kaftan", caption: "Traditional kaftan reimagined with contemporary clean lines", gradient: "bg-gradient-to-br from-emerald-dark via-black to-gray-900" },
-  { id: 4, title: "Gold Coast Blazer", caption: "Structured blazer with hand-finished lapels and gold piping", gradient: "bg-gradient-to-br from-yellow-900 via-emerald-dark to-black" },
-  { id: 5, title: "Abakaliki Two-Piece", caption: "Modern two-piece suit with Igbo-inspired embroidery details", gradient: "bg-gradient-to-br from-emerald via-green-900 to-black" },
-  { id: 6, title: "Ivory Ceremony Set", caption: "Cream-toned ensemble for weddings and celebrations", gradient: "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30" },
-];
+// Starts empty - the owner uploads real lookbook photos which persist to Supabase.
+const initialItems: LookbookItem[] = [];
 
 export default function AdminLookbookPage() {
   const [items, setItems] = useState<LookbookItem[]>(initialItems);
@@ -401,6 +395,23 @@ export default function AdminLookbookPage() {
           </div>
         ))}
       </div>
+
+      {/* Empty state */}
+      {items.length === 0 && !uploading && (
+        <div className="rounded-2xl border border-dashed border-emerald/30 bg-white/50 p-10 text-center">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald/10">
+            <Camera size={24} className="text-emerald" />
+          </div>
+          <h3 className="mt-4 font-heading text-lg font-semibold text-black">
+            Your lookbook is empty
+          </h3>
+          <p className="mt-1 text-sm text-black/55 max-w-sm mx-auto">
+            Tap <span className="font-medium text-emerald">Upload photos</span> or{" "}
+            <span className="font-medium text-emerald">Camera</span> above to add your
+            work. Each photo appears in the public lookbook gallery.
+          </p>
+        </div>
+      )}
 
       {/* Back to dashboard */}
       <div className="mt-8">

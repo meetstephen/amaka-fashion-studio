@@ -19,6 +19,9 @@ export default function TestimonialsSection() {
     return subscribeTestimonials((next) => setItems(next));
   }, []);
 
+  // Hide the entire section until the owner has added real testimonials.
+  if (items.length === 0) return null;
+
   return (
     <section className="relative bg-cream py-20 md:py-28 grain-overlay">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

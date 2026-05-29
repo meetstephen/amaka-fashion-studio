@@ -88,40 +88,9 @@ function save<T>(key: string, items: T[]): void {
 // ---------- Inquiries ----------
 const INQUIRY_KEY = "amaka-inquiries";
 
-const SAMPLE_INQUIRIES: Inquiry[] = [
-  {
-    id: "inq-001",
-    customerName: "Chuka O.",
-    customerContact: "+234 803 *** 4421",
-    itemNames: ["The Statesman (Senator Wear)", "The Pinnacle (Suits)"],
-    notes:
-      "For an APC summit in October. Wants ivory senator with subtle gold; navy three-piece for the gala dinner.",
-    status: "in_progress",
-    source: "whatsapp",
-    createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: "inq-002",
-    customerName: "Emeka N.",
-    customerContact: "+234 813 *** 9302",
-    itemNames: ["The Chairman (Suits)", "Oxford Classic (Shirts) x3"],
-    notes: "Boardroom rotation. Charcoal preferred; double-cuffs.",
-    status: "quoted",
-    source: "form",
-    createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: "inq-003",
-    customerName: "Ifeanyi A.",
-    customerContact: "+234 906 *** 1147",
-    itemNames: ["The Chieftain (Traditional)", "Igbo Heritage"],
-    notes:
-      "Wedding ceremony, December. Wants royal agbada with bullion thread; matching cap.",
-    status: "new",
-    source: "chatbot",
-    createdAt: Date.now() - 6 * 60 * 60 * 1000,
-  },
-];
+// Starts empty. Real inquiries are created by the admin or captured from the
+// site, then persisted to Supabase (or localStorage as a fallback).
+const SAMPLE_INQUIRIES: Inquiry[] = [];
 
 export function getInquiries(): Inquiry[] {
   // TODO: replace with `supabase.from('inquiries').select(...)`
@@ -149,30 +118,8 @@ export function addInquiry(input: Omit<Inquiry, "id" | "createdAt" | "status"> &
 // ---------- Bookings ----------
 const BOOKING_KEY = "amaka-bookings";
 
-const SAMPLE_BOOKINGS: Booking[] = [
-  {
-    id: "bk-001",
-    customerName: "Obinna E.",
-    customerContact: "+234 803 *** 8810",
-    type: "consultation",
-    date: new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10),
-    time: "11:00",
-    notes: "First-time client. Wedding consultation.",
-    status: "confirmed",
-    createdAt: Date.now() - 86_400_000,
-  },
-  {
-    id: "bk-002",
-    customerName: "Tunde A.",
-    customerContact: "+234 706 *** 2202",
-    type: "first_fitting",
-    date: new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10),
-    time: "14:30",
-    notes: "Charcoal Italian wool suit. Bring belt and shoes.",
-    status: "scheduled",
-    createdAt: Date.now() - 3 * 86_400_000,
-  },
-];
+// Starts empty. Real bookings are scheduled by the admin.
+const SAMPLE_BOOKINGS: Booking[] = [];
 
 export function getBookings(): Booking[] {
   // TODO: `supabase.from('bookings').select(...)`
@@ -188,41 +135,9 @@ export function saveBookings(items: Booking[]): void {
 // ---------- Customers ----------
 const CUSTOMER_KEY = "amaka-customers";
 
-const SAMPLE_CUSTOMERS: Customer[] = [
-  {
-    id: "cust-001",
-    name: "Chuka O.",
-    phone: "+234 803 *** 4421",
-    email: "chuka@example.com",
-    city: "Lagos",
-    notes: "Prefers ivory and navy. Allergic to pure synthetic linings.",
-    measurements: "Chest 44, Waist 38, Sleeve 25.5, Inseam 31",
-    totalOrders: 5,
-    createdAt: Date.now() - 240 * 86_400_000,
-  },
-  {
-    id: "cust-002",
-    name: "Emeka N.",
-    phone: "+234 813 *** 9302",
-    email: "emeka@example.com",
-    city: "Abuja",
-    notes: "Senator collector. Likes peak lapels.",
-    measurements: "Chest 42, Waist 36, Sleeve 25, Inseam 31",
-    totalOrders: 3,
-    createdAt: Date.now() - 120 * 86_400_000,
-  },
-  {
-    id: "cust-003",
-    name: "Ifeanyi A.",
-    phone: "+234 906 *** 1147",
-    email: "",
-    city: "Enugu",
-    notes: "Wedding client - traditional commission ongoing.",
-    measurements: "Chest 40, Waist 34, Sleeve 24.5, Inseam 30",
-    totalOrders: 1,
-    createdAt: Date.now() - 30 * 86_400_000,
-  },
-];
+// Starts empty. Real customer profiles are created by the admin, or captured
+// automatically when a visitor submits the online measurements form.
+const SAMPLE_CUSTOMERS: Customer[] = [];
 
 export function getCustomers(): Customer[] {
   // TODO: `supabase.from('customers').select(...)`
