@@ -14,44 +14,8 @@ interface ImageItem {
   url?: string;
 }
 
-const initialImages: ImageItem[] = [
-  {
-    id: 1,
-    name: "Senator Wear Collection",
-    category: "collections",
-    gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black",
-  },
-  {
-    id: 2,
-    name: "Bespoke Suits Hero",
-    category: "hero",
-    gradient: "bg-gradient-to-br from-black via-gray-900 to-emerald-dark",
-  },
-  {
-    id: 3,
-    name: "Kaftan Lookbook Shot",
-    category: "lookbook",
-    gradient: "bg-gradient-to-br from-emerald-dark via-black to-gray-900",
-  },
-  {
-    id: 4,
-    name: "Agbada Detail Close-up",
-    category: "collections",
-    gradient: "bg-gradient-to-br from-yellow-900 via-emerald-dark to-black",
-  },
-  {
-    id: 5,
-    name: "Atelier Workshop",
-    category: "about",
-    gradient: "bg-gradient-to-br from-emerald via-green-900 to-black",
-  },
-  {
-    id: 6,
-    name: "Gold Embroidery Detail",
-    category: "featured",
-    gradient: "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30",
-  },
-];
+// Starts empty - the owner uploads real photos which persist to Supabase.
+const initialImages: ImageItem[] = [];
 
 export default function AdminImagesPage() {
   const [images, setImages] = useState<ImageItem[]>(initialImages);
@@ -455,6 +419,23 @@ export default function AdminImagesPage() {
           </div>
         ))}
       </div>
+
+      {/* Empty state */}
+      {images.length === 0 && !uploading && (
+        <div className="rounded-2xl border border-dashed border-emerald/30 bg-white/50 p-10 text-center">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald/10">
+            <Camera size={24} className="text-emerald" />
+          </div>
+          <h3 className="mt-4 font-heading text-lg font-semibold text-black">
+            No images yet
+          </h3>
+          <p className="mt-1 text-sm text-black/55 max-w-sm mx-auto">
+            Tap <span className="font-medium text-emerald">Upload images</span> or{" "}
+            <span className="font-medium text-emerald">Take photo</span> above to add
+            your first piece. Photos appear here and on the public site instantly.
+          </p>
+        </div>
+      )}
 
       {/* Back to dashboard */}
       <div className="mt-8">

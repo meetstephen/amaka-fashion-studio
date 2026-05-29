@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check, MessageCircle, Ruler, Send } from "lucide-react";
+import { Check, Lock, MessageCircle, Ruler, Send } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { fadeInUp, staggerContainer, staggerItem } from "@/lib/animations";
 
@@ -390,6 +390,19 @@ export default function MeasurementsPage() {
               {isSubmitting ? "Submitting..." : "Submit Measurements"}
             </button>
           </motion.div>
+
+          {/* Privacy note */}
+          <motion.p
+            variants={staggerItem}
+            className="flex items-start gap-2 text-center sm:text-left text-[11px] leading-relaxed text-black/50 max-w-xl mx-auto"
+          >
+            <Lock size={13} className="mt-0.5 shrink-0 text-emerald/70" aria-hidden />
+            <span>
+              Your details are kept private and used only to prepare your
+              garment and contact you about your order. We never sell or share
+              your information with third parties.
+            </span>
+          </motion.p>
         </motion.form>
 
         {/* CTA Info Section */}

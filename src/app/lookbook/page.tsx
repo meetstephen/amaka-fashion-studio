@@ -15,83 +15,20 @@ interface LookbookItem {
   image_url?: string | null;
 }
 
-const defaultLookbookItems: LookbookItem[] = [
-  {
-    id: 1,
-    title: "Royal Emerald Agbada",
-    caption: "Flowing silhouette in deep emerald, embroidered with gold thread",
-    gradient: "bg-gradient-to-br from-emerald via-emerald-dark to-black",
-  },
-  {
-    id: 2,
-    title: "Midnight Senator",
-    caption: "Tailored precision in black with gold button accents",
-    gradient: "bg-gradient-to-br from-black via-gray-900 to-emerald-dark",
-  },
-  {
-    id: 3,
-    title: "Heritage Kaftan",
-    caption: "Traditional kaftan reimagined with contemporary clean lines",
-    gradient: "bg-gradient-to-br from-emerald-dark via-black to-gray-900",
-  },
-  {
-    id: 4,
-    title: "Gold Coast Blazer",
-    caption: "Structured blazer with hand-finished lapels and gold piping",
-    gradient: "bg-gradient-to-br from-yellow-900 via-emerald-dark to-black",
-  },
-  {
-    id: 5,
-    title: "Abakaliki Two-Piece",
-    caption: "Modern two-piece suit with Igbo-inspired embroidery details",
-    gradient: "bg-gradient-to-br from-emerald via-green-900 to-black",
-  },
-  {
-    id: 6,
-    title: "Ivory Ceremony Set",
-    caption: "Cream-toned ensemble for weddings and celebrations",
-    gradient: "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30",
-  },
-  {
-    id: 7,
-    title: "Obsidian Formal",
-    caption: "All-black formal wear with subtle emerald inner lining",
-    gradient: "bg-gradient-to-br from-gray-900 via-black to-emerald-dark/50",
-  },
-  {
-    id: 8,
-    title: "Safari Linen Shirt",
-    caption: "Relaxed luxury in lightweight linen with hand-stitched details",
-    gradient: "bg-gradient-to-br from-emerald/60 via-green-800 to-black",
-  },
-  {
-    id: 9,
-    title: "Ankara Fusion Jacket",
-    caption: "Bold Ankara prints fused with Western tailoring",
-    gradient: "bg-gradient-to-br from-orange-900 via-emerald-dark to-black",
-  },
-  {
-    id: 10,
-    title: "The Gentleman Cape",
-    caption: "Flowing cape over fitted suit - statement occasion wear",
-    gradient: "bg-gradient-to-br from-emerald via-black to-emerald-dark",
-  },
-  {
-    id: 11,
-    title: "Vintage Palm Beach",
-    caption: "Lightweight tropical suiting with retro-inspired silhouette",
-    gradient: "bg-gradient-to-br from-green-700 via-emerald to-yellow-900/40",
-  },
-  {
-    id: 12,
-    title: "Coronation Grand",
-    caption: "Floor-length ceremonial robe with intricate gold beadwork",
-    gradient: "bg-gradient-to-br from-yellow-800 via-emerald-dark to-black",
-  },
+// Gradient palette used only as a fallback tile colour for uploaded photos
+// that don't carry their own gradient. The gallery itself starts empty and is
+// populated from Supabase once the owner uploads her work.
+const FALLBACK_GRADIENTS = [
+  "bg-gradient-to-br from-emerald via-emerald-dark to-black",
+  "bg-gradient-to-br from-black via-gray-900 to-emerald-dark",
+  "bg-gradient-to-br from-emerald-dark via-black to-gray-900",
+  "bg-gradient-to-br from-yellow-900 via-emerald-dark to-black",
+  "bg-gradient-to-br from-emerald via-green-900 to-black",
+  "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30",
 ];
 
 export default function LookbookPage() {
-  const [lookbookItems, setLookbookItems] = useState<LookbookItem[]>(defaultLookbookItems);
+  const [lookbookItems, setLookbookItems] = useState<LookbookItem[]>([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -107,7 +44,7 @@ export default function LookbookPage() {
           id: row.id ?? idx + 1,
           title: row.title || `Look ${idx + 1}`,
           caption: row.caption || row.description || "",
-          gradient: row.gradient || defaultLookbookItems[idx % defaultLookbookItems.length].gradient,
+          gradient: row.gradient || FALLBACK_GRADIENTS[idx % FALLBACK_GRADIENTS.length],
           image_url: row.image_url || null,
         }));
         setLookbookItems(items);
@@ -213,6 +150,41 @@ export default function LookbookPage() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Empty state - shown until the atelier uploads its first photos */}
+        {lookbookItems.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-16 rounded-3xl border border-dashed border-emerald/25 bg-white/40 px-6 py-16 text-center"
+          >
+            <p className="font-heading text-2xl md:text-3xl italic text-emerald">
+              The lookbook is being curated.
+            </p>
+            <p className="mt-3 text-sm text-black/60 max-w-md mx-auto leading-relaxed">
+              Our latest pieces are being photographed and will appear here
+              shortly. In the meantime, explore our collections or reach us on
+              WhatsApp to see current work.
+            </p>
+            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href="/collections"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-cream transition-all hover:bg-emerald-dark min-h-[44px]"
+              >
+                View Collections
+              </a>
+              <a
+                href="https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier%2C%20may%20I%20see%20your%20latest%20work%3F"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald/40 px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-emerald transition-all hover:border-emerald hover:bg-emerald/5 min-h-[44px]"
+              >
+                Ask on WhatsApp
+              </a>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Lightbox Modal */}

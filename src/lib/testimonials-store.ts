@@ -16,40 +16,9 @@ export interface Testimonial {
 const STORAGE_KEY = "amaka-testimonials";
 const CHANGE_EVENT = "amaka-testimonials-change";
 
-export const DEFAULT_TESTIMONIALS: Testimonial[] = [
-  {
-    id: "t1",
-    name: "Chuka O.",
-    location: "Lagos",
-    quote:
-      "The cut on my senator was uncanny - tailored as though they had measured me twice in my dreams. Hands down the best fitting in Nigeria.",
-    rating: 5,
-  },
-  {
-    id: "t2",
-    name: "Emeka N.",
-    location: "Abuja",
-    quote:
-      "I commissioned three suits for the campaign trail. Every event, someone asks who tailored them. Quiet authority - that's the Amaka difference.",
-    rating: 5,
-  },
-  {
-    id: "t3",
-    name: "Ifeanyi A.",
-    location: "Enugu",
-    quote:
-      "My wedding agbada was poetry. Hand-thread gold work, balanced cut, shoulders that sit right. Worth every kobo and every fitting.",
-    rating: 5,
-  },
-  {
-    id: "t4",
-    name: "Obinna E.",
-    location: "Port Harcourt",
-    quote:
-      "From WhatsApp consultation to final delivery - the entire experience felt like it had been designed by someone who actually cares about the gentleman.",
-    rating: 5,
-  },
-];
+// Starts empty so the homepage testimonials section stays hidden until the
+// owner adds real client words from the admin panel.
+export const DEFAULT_TESTIMONIALS: Testimonial[] = [];
 
 function isBrowser() {
   return typeof window !== "undefined";
