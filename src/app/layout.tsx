@@ -88,6 +88,7 @@ const localBusinessJsonLd = {
     "An atelier in Abakaliki crafting bespoke senator wear, suits, traditional and corporate menswear. Italian wool, Egyptian cotton, hand-finished. Where heritage meets distinction.",
   url: "https://amaka-fashion-atelier.vercel.app",
   telephone: "+234 913 127 2407",
+  email: "lucynwoka959@gmail.com",
   priceRange: "$$$",
   image: "https://amaka-fashion-atelier.vercel.app/favicon.svg",
   address: {

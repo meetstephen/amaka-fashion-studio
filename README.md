@@ -6,6 +6,8 @@ A mobile-first luxury menswear website for Amaka Fashion Atelier, featuring an A
 
 **Live site:** https://amaka-fashion-atelier.vercel.app *(hosted on Netlify)*
 
+**Contact:** WhatsApp +234 913 127 2407 · Email lucynwoka959@gmail.com · Abakaliki, Ebonyi State, Nigeria
+
 ---
 
 ## Table of Contents
