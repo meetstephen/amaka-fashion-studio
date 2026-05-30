@@ -127,6 +127,12 @@ export default function Footer() {
               >
                 Phone · +234 913 127 2407
               </a>
+              <a
+                href="mailto:lucynwoka959@gmail.com"
+                className="block min-h-[44px] py-1 hover:text-gold transition-colors break-all"
+              >
+                Email · lucynwoka959@gmail.com
+              </a>
               <p className="text-xs text-cream/45 pt-2 leading-relaxed">
                 Mon - Fri · 9:00 AM - 6:00 PM
                 <br />

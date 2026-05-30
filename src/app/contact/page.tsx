@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, MapPin, MessageCircle, Phone, Ruler, Send } from "lucide-react";
+import { Clock, Mail, MapPin, MessageCircle, Phone, Ruler, Send } from "lucide-react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import FaqAccordion from "@/components/FaqAccordion";
@@ -120,6 +120,31 @@ export default function ContactPage() {
                   >
                     +234 913 127 2407
                   </a>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              variants={staggerItem}
+              className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm"
+            >
+              <div className="flex items-start gap-4">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald/10">
+                  <Mail size={18} className="text-emerald" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-heading text-lg font-semibold text-black">
+                    Email Us
+                  </h4>
+                  <a
+                    href="mailto:lucynwoka959@gmail.com"
+                    className="mt-1 block text-sm text-emerald hover:text-emerald-dark transition-colors break-all"
+                  >
+                    lucynwoka959@gmail.com
+                  </a>
+                  <p className="mt-1 text-xs text-black/50">
+                    For detailed enquiries &amp; commissions
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -259,6 +284,16 @@ export default function ContactPage() {
                   <Send size={16} />
                   Send via WhatsApp
                 </button>
+
+                <p className="text-center text-xs text-black/50">
+                  Prefer email?{" "}
+                  <a
+                    href="mailto:lucynwoka959@gmail.com"
+                    className="font-medium text-emerald hover:text-emerald-dark transition-colors"
+                  >
+                    Write to us directly
+                  </a>
+                </p>
               </form>
             </div>
           </motion.div>

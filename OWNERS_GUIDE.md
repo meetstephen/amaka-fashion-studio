@@ -100,6 +100,7 @@ This is the large banner near the top of your homepage — use your best seasona
 ## 9. How customers reach you
 
 - **WhatsApp** — every "Order", "Book", and "Enquire" button opens a WhatsApp chat to your number (+234 913 127 2407). Keep WhatsApp handy!
+- **Email** — your address `lucynwoka959@gmail.com` is shown on the Contact page and in the footer for detailed enquiries.
 - **Dapper (the chatbot)** — your AI style assistant answers visitors' questions any time and guides them to WhatsApp.
 - **Measurements page** — customers can send their body measurements online; they land in your **Customer Accounts**.
 
