@@ -1,97 +1,80 @@
 /**
- * Supabase Client Placeholder
+ * src/lib/supabase.ts
+ * ─────────────────────────────────────────────────────────────────────────
+ * Exports a configured Supabase client using the public anon key.
  *
- * This file provides a placeholder for the Supabase client connection.
- * DO NOT install @supabase/supabase-js until ready to connect to a real database.
+ * Use this for READ operations (fetching images, lookbook items, etc.)
+ * in server components and API routes.
  *
- * Required environment variables:
- * - NEXT_PUBLIC_SUPABASE_URL: Your Supabase project URL
- * - NEXT_PUBLIC_SUPABASE_ANON_KEY: Your Supabase anonymous/public key
+ * For admin WRITE operations (upload, delete, insert), the
+ * /api/admin/upload route creates its own client with the service role key
+ * after verifying the admin session — the service role key is never exposed
+ * to the browser.
  *
- * ========================================
- * DATABASE SCHEMA (to create in Supabase):
- * ========================================
- *
- * Table: images
- * - id: uuid (primary key, default gen_random_uuid())
- * - url: text (not null) - Supabase Storage URL
- * - name: text (not null)
- * - category: text (not null) - e.g. 'collections', 'lookbook', 'hero', 'about', 'featured'
- * - created_at: timestamptz (default now())
- *
- * Table: lookbook
- * - id: uuid (primary key, default gen_random_uuid())
- * - image_url: text (not null) - Supabase Storage URL
- * - title: text (not null)
- * - caption: text
- * - order: integer (not null, default 0)
- * - created_at: timestamptz (default now())
- *
- * Table: content
- * - id: uuid (primary key, default gen_random_uuid())
- * - key: text (unique, not null) - e.g. 'tagline', 'about_story', 'collection_senator'
- * - value: text (not null)
- * - updated_at: timestamptz (default now())
- *
- * Table: featured
- * - id: uuid (primary key, default gen_random_uuid())
- * - image_url: text (not null) - Supabase Storage URL
- * - title: text
- * - subtitle: text
- * - updated_at: timestamptz (default now())
- *
- * Storage Bucket: 'images' (public)
- * - Store all uploaded images here
- * - Access via: supabase.storage.from('images').upload(...)
+ * Environment variables (set in Vercel → Settings → Environment Variables):
+ *   VITE_SUPABASE_URL          — your project URL (already set)
+ *   VITE_SUPABASE_ANON_KEY     — your public anon key (already set)
+ *   SUPABASE_SERVICE_ROLE_KEY  — secret key used server-side only (add this)
  */
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { createClient } from "@supabase/supabase-js";
 
-/**
- * Placeholder Supabase client creator.
- * Replace this with the actual @supabase/supabase-js createClient when ready.
- *
- * Usage (after installing @supabase/supabase-js):
- * ```
- * import { createClient } from '@supabase/supabase-js'
- * export const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!)
- * ```
- */
-export function createClient() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn(
-      "[Supabase] Missing environment variables: NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. " +
-        "Database features are disabled. Set these variables and install @supabase/supabase-js to enable."
-    );
-  }
+// Read the URL — supports both VITE_ prefix (current) and NEXT_PUBLIC_ prefix (future)
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  process.env.VITE_SUPABASE_URL ??
+  "";
 
-  // TODO: Replace with actual Supabase client
-  // import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-  // return createSupabaseClient(SUPABASE_URL!, SUPABASE_ANON_KEY!)
+// Read the anon key — supports both prefixes
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.VITE_SUPABASE_ANON_KEY ??
+  "";
 
-  return {
-    from: (table: string) => {
-      console.warn(`[Supabase] Attempted to query table "${table}" but client is not configured.`);
-      return {
-        select: () => Promise.resolve({ data: [], error: null }),
-        insert: () => Promise.resolve({ data: null, error: null }),
-        update: () => Promise.resolve({ data: null, error: null }),
-        delete: () => Promise.resolve({ data: null, error: null }),
-      };
-    },
-    storage: {
-      from: (bucket: string) => {
-        console.warn(`[Supabase] Attempted to access storage bucket "${bucket}" but client is not configured.`);
-        return {
-          upload: () => Promise.resolve({ data: null, error: null }),
-          getPublicUrl: () => ({ data: { publicUrl: "" } }),
-          remove: () => Promise.resolve({ data: null, error: null }),
-        };
-      },
-    },
-  };
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn(
+    "[Supabase] Missing environment variables. " +
+      "Expected VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel. " +
+      "Read operations will not work until these are set."
+  );
 }
 
-// Export a singleton placeholder client
-export const supabase = createClient();
+/**
+ * Public Supabase client — uses the anon key, subject to RLS policies.
+ * Safe to use in server components and API routes for reading data.
+ */
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// ─── TypeScript interfaces matching your Supabase table schema ────────────
+
+export interface ImageRow {
+  id: string;
+  url: string;
+  name: string;
+  category: string;
+  created_at: string;
+}
+
+export interface LookbookRow {
+  id: string;
+  image_url: string;
+  title: string;
+  caption: string;
+  order: number;
+  created_at: string;
+}
+
+export interface ContentRow {
+  id: string;
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+export interface FeaturedRow {
+  id: string;
+  image_url: string;
+  title: string;
+  subtitle: string;
+  updated_at: string;
+}
