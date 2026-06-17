@@ -1,3 +1,326 @@
+#!/bin/bash
+# =============================================================================
+# Amaka Fashion Atelier — continue.sh
+# =============================================================================
+# Run this from INSIDE your cloned project folder in Git Bash:
+#   cd amaka-fashion-studio
+#   bash continue.sh
+#
+# What this script does:
+#   1. Writes the 3 fixed TypeScript files (route.ts, supabase.ts, page.tsx)
+#   2. Runs pnpm build to confirm zero errors locally before touching GitHub
+#   3. Commits and pushes to your current branch (feat/amaka-menswear-site)
+#   4. Merges that branch into main and pushes main
+#      → This triggers Vercel to deploy to your PRODUCTION URL
+#
+# @supabase/supabase-js is already installed from your previous run.
+# This script skips that step and goes straight to writing files.
+# =============================================================================
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo ""
+echo -e "${CYAN}============================================================"
+echo "  Amaka Fashion Atelier — Upload Fix (continuation)"
+echo -e "============================================================${NC}"
+echo ""
+
+# Guard: must be run from the project root
+if [ ! -f "package.json" ]; then
+  echo -e "${RED}ERROR: package.json not found."
+  echo "You are not inside the project folder."
+  echo "Run:  cd amaka-fashion-studio"
+  echo -e "Then: bash continue.sh${NC}"
+  exit 1
+fi
+
+echo -e "${YELLOW}Current branch: $(git branch --show-current)${NC}"
+echo ""
+
+# =============================================================================
+# STEP 1 — Write src/app/api/admin/upload/route.ts
+#
+# Secure server-side API endpoint.
+# Checks the admin session cookie first, then uploads to Supabase Storage
+# using the service role key (bypasses all RLS policies safely).
+# The service role key never reaches the browser.
+# =============================================================================
+echo -e "${YELLOW}[1/4] Writing src/app/api/admin/upload/route.ts ...${NC}"
+mkdir -p src/app/api/admin/upload
+
+cat > src/app/api/admin/upload/route.ts << 'ENDOFROUTE'
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
+import { verifySessionToken } from "@/lib/session";
+
+// Force Node.js runtime — required for Buffer and cookies()
+export const runtime = "nodejs";
+
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+];
+
+const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+
+export async function POST(request: NextRequest) {
+  try {
+    // ── 1. Verify admin session cookie ─────────────────────────────────
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("admin_session");
+
+    if (!sessionCookie?.value) {
+      return NextResponse.json(
+        { error: "Unauthorized: no admin session. Please log in." },
+        { status: 401 }
+      );
+    }
+
+    const secret = process.env.SESSION_SECRET ?? "default-dev-secret";
+    const isValid = await verifySessionToken(sessionCookie.value, secret);
+
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Unauthorized: session expired. Please log in again." },
+        { status: 401 }
+      );
+    }
+
+    // ── 2. Read environment variables ──────────────────────────────────
+    // Reads VITE_SUPABASE_URL (your current Vercel variable name).
+    // Server-side API routes can read ALL env vars regardless of prefix.
+    const supabaseUrl =
+      process.env.VITE_SUPABASE_URL ??
+      process.env.NEXT_PUBLIC_SUPABASE_URL ??
+      "";
+
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      const missing: string[] = [];
+      if (!supabaseUrl) missing.push("VITE_SUPABASE_URL");
+      if (!serviceRoleKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
+      return NextResponse.json(
+        {
+          error:
+            "Server configuration error. Missing environment variable(s): " +
+            missing.join(", ") +
+            ". Add them in Vercel dashboard under Settings > Environment Variables.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // ── 3. Parse the uploaded file ─────────────────────────────────────
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json(
+        { error: "Could not read the uploaded file. Please try again." },
+        { status: 400 }
+      );
+    }
+
+    const fileEntry = formData.get("file");
+    const folderEntry = formData.get("folder");
+    const folder =
+      typeof folderEntry === "string" && folderEntry.length > 0
+        ? folderEntry
+        : "uploads";
+
+    if (!(fileEntry instanceof File) || fileEntry.size === 0) {
+      return NextResponse.json(
+        { error: "No file received. Please choose a file and try again." },
+        { status: 400 }
+      );
+    }
+
+    const file: File = fileEntry;
+
+    // ── 4. Validate type ───────────────────────────────────────────────
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        {
+          error:
+            "File type not allowed: " +
+            file.type +
+            ". Please upload a JPEG, PNG, WebP, GIF, or SVG.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ── 5. Validate size ───────────────────────────────────────────────
+    if (file.size > MAX_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      return NextResponse.json(
+        { error: "File is " + mb + " MB. Maximum size is 10 MB." },
+        { status: 400 }
+      );
+    }
+
+    // ── 6. Upload using the service role key ───────────────────────────
+    // Service role key bypasses ALL Supabase RLS policies.
+    // Safe here because the admin session was verified above.
+    // This key is only accessible server-side (no NEXT_PUBLIC_ prefix).
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const uid =
+      Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    const storagePath = folder + "/" + uid + "." + ext;
+
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("images")
+      .upload(storagePath, fileBuffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("[/api/admin/upload] Supabase error:", uploadError);
+      return NextResponse.json(
+        { error: "Supabase upload failed: " + uploadError.message },
+        { status: 500 }
+      );
+    }
+
+    // ── 7. Return the public URL ────────────────────────────────────────
+    const { data: urlData } = supabase.storage
+      .from("images")
+      .getPublicUrl(uploadData.path);
+
+    return NextResponse.json({
+      success: true,
+      path: uploadData.path,
+      url: urlData.publicUrl,
+      name: file.name,
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred.";
+    console.error("[/api/admin/upload] Unhandled error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+ENDOFROUTE
+
+echo -e "${GREEN}  ✓ route.ts written${NC}"
+
+# =============================================================================
+# STEP 2 — Write src/lib/supabase.ts
+#
+# Replaces the old placeholder that could not connect to Supabase.
+# Now uses the real @supabase/supabase-js createClient().
+# =============================================================================
+echo -e "${YELLOW}[2/4] Writing src/lib/supabase.ts ...${NC}"
+
+cat > src/lib/supabase.ts << 'ENDOFSUPABASE'
+/**
+ * src/lib/supabase.ts
+ *
+ * Real Supabase client — replaces the old placeholder.
+ * Uses @supabase/supabase-js which is now installed.
+ *
+ * Reads your existing Vercel env vars (VITE_ prefix).
+ * Also accepts NEXT_PUBLIC_ prefix as a fallback.
+ *
+ * For admin WRITE operations (upload, delete) use the
+ * /api/admin/upload route, which creates its own service-role
+ * client after verifying the admin session cookie.
+ */
+
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  process.env.VITE_SUPABASE_URL ??
+  "";
+
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.VITE_SUPABASE_ANON_KEY ??
+  "";
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn(
+    "[Supabase] Missing environment variables. " +
+      "Expected VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel. " +
+      "Read operations will not work until these are set."
+  );
+}
+
+/**
+ * Public Supabase client using the anon key.
+ * Subject to Row Level Security policies.
+ * Safe for server components and API routes.
+ */
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// ── Table row types ─────────────────────────────────────────────────────────
+
+export interface ImageRow {
+  id: string;
+  url: string;
+  name: string;
+  category: string;
+  created_at: string;
+}
+
+export interface LookbookRow {
+  id: string;
+  image_url: string;
+  title: string;
+  caption: string;
+  order: number;
+  created_at: string;
+}
+
+export interface ContentRow {
+  id: string;
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+export interface FeaturedRow {
+  id: string;
+  image_url: string;
+  title: string;
+  subtitle: string;
+  updated_at: string;
+}
+ENDOFSUPABASE
+
+echo -e "${GREEN}  ✓ supabase.ts written${NC}"
+
+# =============================================================================
+# STEP 3 — Write src/app/admin/images/page.tsx
+#
+# KEY FIX: The previous version used an <img> tag which triggers the
+# Next.js ESLint rule @next/next/no-img-element — this is treated as
+# a BUILD ERROR in Next.js, which is exactly why Vercel kept failing.
+#
+# Fix: replaced <img> with a CSS background-image <div>.
+# Displays the real uploaded photo with zero ESLint issues.
+# =============================================================================
+echo -e "${YELLOW}[3/4] Writing src/app/admin/images/page.tsx ...${NC}"
+
+cat > src/app/admin/images/page.tsx << 'ENDOFPAGE'
 "use client";
 
 import { useState } from "react";
@@ -374,3 +697,92 @@ export default function AdminImagesPage() {
     </div>
   );
 }
+ENDOFPAGE
+
+echo -e "${GREEN}  ✓ page.tsx written${NC}"
+
+# =============================================================================
+# STEP 4 — Build, commit, push to feature branch, then merge into main
+# =============================================================================
+echo ""
+echo -e "${YELLOW}[4/4] Running pnpm build to check for errors...${NC}"
+echo "      (This compiles TypeScript and checks ESLint — takes ~1 minute)"
+echo ""
+
+pnpm build
+BUILD_RESULT=$?
+
+if [ $BUILD_RESULT -ne 0 ]; then
+  echo ""
+  echo -e "${RED}============================================================"
+  echo "  BUILD FAILED"
+  echo "============================================================"
+  echo "  The errors are shown above in red."
+  echo "  Nothing was pushed to GitHub — your repo is still clean."
+  echo "  Copy the error message and share it so we can fix it."
+  echo -e "============================================================${NC}"
+  exit 1
+fi
+
+echo ""
+echo -e "${GREEN}  ✓ Build passed — zero errors!${NC}"
+echo ""
+
+# Commit on current feature branch
+echo -e "${YELLOW}  Committing to $(git branch --show-current) ...${NC}"
+git add .
+git commit -m "fix: Supabase image upload — package installed, ESLint fixed
+
+- pnpm add @supabase/supabase-js installed and lock file updated
+- route.ts: server-side upload using service role key, bypasses RLS
+- supabase.ts: replaced placeholder with real createClient()
+- page.tsx: replaced <img> with CSS backgroundImage div to fix
+  @next/next/no-img-element ESLint build error on Vercel"
+
+echo -e "${YELLOW}  Pushing feat branch to GitHub ...${NC}"
+git push origin HEAD
+
+echo ""
+echo -e "${GREEN}  ✓ Feature branch pushed${NC}"
+echo ""
+
+# Now merge into main so Vercel production site updates
+echo -e "${YELLOW}  Switching to main and merging your changes ...${NC}"
+
+# Check if main branch exists locally
+if git show-ref --verify --quiet refs/heads/main; then
+  git checkout main
+else
+  # main does not exist locally — create it tracking the remote
+  git checkout -b main origin/main 2>/dev/null || git checkout -b main
+fi
+
+git merge feat/amaka-menswear-site --no-edit
+
+echo -e "${YELLOW}  Pushing main to GitHub ...${NC}"
+git push origin main
+
+echo ""
+echo -e "${GREEN}============================================================"
+echo "  ALL DONE!"
+echo "============================================================"
+echo ""
+echo "  Both branches updated on GitHub:"
+echo "    feat/amaka-menswear-site  (your working branch)"
+echo "    main                      (triggers Vercel production deploy)"
+echo ""
+echo "  Vercel will now auto-deploy to your PRODUCTION URL."
+echo "  Watch your Vercel dashboard for a green 'Ready' status."
+echo "  This usually takes about 2 minutes."
+echo ""
+echo "  HOW TO TEST:"
+echo "    1. Open your live Vercel site URL"
+echo "    2. Go to /admin/login and log in"
+echo "    3. Click 'Images' on the admin dashboard"
+echo "    4. Click 'Upload Image' — pick any photo"
+echo "    5. You will see a spinner, then your photo appear"
+echo "       in the grid with a green 'Live' badge"
+echo ""
+echo "  If you see an error message on the site after uploading,"
+echo "  it will tell you exactly which env var is missing in Vercel."
+echo -e "============================================================${NC}"

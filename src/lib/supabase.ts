@@ -1,31 +1,24 @@
 /**
  * src/lib/supabase.ts
- * ─────────────────────────────────────────────────────────────────────────
- * Exports a configured Supabase client using the public anon key.
  *
- * Use this for READ operations (fetching images, lookbook items, etc.)
- * in server components and API routes.
+ * Real Supabase client — replaces the old placeholder.
+ * Uses @supabase/supabase-js which is now installed.
  *
- * For admin WRITE operations (upload, delete, insert), the
- * /api/admin/upload route creates its own client with the service role key
- * after verifying the admin session — the service role key is never exposed
- * to the browser.
+ * Reads your existing Vercel env vars (VITE_ prefix).
+ * Also accepts NEXT_PUBLIC_ prefix as a fallback.
  *
- * Environment variables (set in Vercel → Settings → Environment Variables):
- *   VITE_SUPABASE_URL          — your project URL (already set)
- *   VITE_SUPABASE_ANON_KEY     — your public anon key (already set)
- *   SUPABASE_SERVICE_ROLE_KEY  — secret key used server-side only (add this)
+ * For admin WRITE operations (upload, delete) use the
+ * /api/admin/upload route, which creates its own service-role
+ * client after verifying the admin session cookie.
  */
 
 import { createClient } from "@supabase/supabase-js";
 
-// Read the URL — supports both VITE_ prefix (current) and NEXT_PUBLIC_ prefix (future)
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ??
   process.env.VITE_SUPABASE_URL ??
   "";
 
-// Read the anon key — supports both prefixes
 const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   process.env.VITE_SUPABASE_ANON_KEY ??
@@ -40,12 +33,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 /**
- * Public Supabase client — uses the anon key, subject to RLS policies.
- * Safe to use in server components and API routes for reading data.
+ * Public Supabase client using the anon key.
+ * Subject to Row Level Security policies.
+ * Safe for server components and API routes.
  */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ─── TypeScript interfaces matching your Supabase table schema ────────────
+// ── Table row types ─────────────────────────────────────────────────────────
 
 export interface ImageRow {
   id: string;

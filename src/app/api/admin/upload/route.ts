@@ -3,10 +3,10 @@ import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { verifySessionToken } from "@/lib/session";
 
-// Force Node.js runtime so Buffer and cookies() both work
+// Force Node.js runtime — required for Buffer and cookies()
 export const runtime = "nodejs";
 
-const ALLOWED_MIME_TYPES = [
+const ALLOWED_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/png",
@@ -15,17 +15,17 @@ const ALLOWED_MIME_TYPES = [
   "image/svg+xml",
 ];
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(request: NextRequest) {
   try {
-    // ── 1. Verify the admin session cookie ──────────────────────────────
+    // ── 1. Verify admin session cookie ─────────────────────────────────
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("admin_session");
 
     if (!sessionCookie?.value) {
       return NextResponse.json(
-        { error: "Unauthorized: No admin session found. Please log in." },
+        { error: "Unauthorized: no admin session. Please log in." },
         { status: 401 }
       );
     }
@@ -35,14 +35,14 @@ export async function POST(request: NextRequest) {
 
     if (!isValid) {
       return NextResponse.json(
-        { error: "Unauthorized: Session is invalid or expired. Please log in again." },
+        { error: "Unauthorized: session expired. Please log in again." },
         { status: 401 }
       );
     }
 
-    // ── 2. Read Supabase environment variables ───────────────────────────
-    // Reads VITE_SUPABASE_URL first (your current Vercel setup),
-    // then falls back to NEXT_PUBLIC_SUPABASE_URL if you ever rename it.
+    // ── 2. Read environment variables ──────────────────────────────────
+    // Reads VITE_SUPABASE_URL (your current Vercel variable name).
+    // Server-side API routes can read ALL env vars regardless of prefix.
     const supabaseUrl =
       process.env.VITE_SUPABASE_URL ??
       process.env.NEXT_PUBLIC_SUPABASE_URL ??
@@ -57,14 +57,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            `Server configuration error. The following environment variables are missing in Vercel: ${missing.join(", ")}. ` +
-            "Go to Vercel → your project → Settings → Environment Variables and add them.",
+            "Server configuration error. Missing environment variable(s): " +
+            missing.join(", ") +
+            ". Add them in Vercel dashboard under Settings > Environment Variables.",
         },
         { status: 500 }
       );
     }
 
-    // ── 3. Parse the uploaded file from multipart form data ─────────────
+    // ── 3. Parse the uploaded file ─────────────────────────────────────
     let formData: FormData;
     try {
       formData = await request.formData();
@@ -77,90 +78,84 @@ export async function POST(request: NextRequest) {
 
     const fileEntry = formData.get("file");
     const folderEntry = formData.get("folder");
-    const folder = typeof folderEntry === "string" ? folderEntry : "uploads";
+    const folder =
+      typeof folderEntry === "string" && folderEntry.length > 0
+        ? folderEntry
+        : "uploads";
 
-    // Type-safe file check — formData.get() can return string | File | null
     if (!(fileEntry instanceof File) || fileEntry.size === 0) {
       return NextResponse.json(
-        { error: "No file was received. Please choose a file and try again." },
+        { error: "No file received. Please choose a file and try again." },
         { status: 400 }
       );
     }
 
     const file: File = fileEntry;
 
-    // ── 4. Validate the file type ────────────────────────────────────────
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    // ── 4. Validate type ───────────────────────────────────────────────
+    if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         {
-          error: `"${file.type}" is not an allowed file type. Please upload a JPEG, PNG, WebP, GIF, or SVG image.`,
+          error:
+            "File type not allowed: " +
+            file.type +
+            ". Please upload a JPEG, PNG, WebP, GIF, or SVG.",
         },
         { status: 400 }
       );
     }
 
-    // ── 5. Validate the file size ────────────────────────────────────────
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    // ── 5. Validate size ───────────────────────────────────────────────
+    if (file.size > MAX_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
       return NextResponse.json(
-        { error: `File is ${sizeMB} MB. The maximum allowed size is 10 MB.` },
+        { error: "File is " + mb + " MB. Maximum size is 10 MB." },
         { status: 400 }
       );
     }
 
-    // ── 6. Upload to Supabase Storage using the service role key ─────────
-    //
-    // WHY service role key?
-    // The service role key bypasses ALL Row Level Security (RLS) policies in
-    // Supabase.  It is safe here because:
-    //   a) We verified the admin session above.
-    //   b) This key is stored only in Vercel env vars — never in the browser.
-    //   c) This is a server-side API route — it is never sent to the client.
+    // ── 6. Upload using the service role key ───────────────────────────
+    // Service role key bypasses ALL Supabase RLS policies.
+    // Safe here because the admin session was verified above.
+    // This key is only accessible server-side (no NEXT_PUBLIC_ prefix).
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Build a unique file path: folder/timestamp-randomstring.ext
-    const fileExtension =
-      file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const uniquePart = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const storagePath = `${folder}/${uniquePart}.${fileExtension}`;
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const uid =
+      Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    const storagePath = folder + "/" + uid + "." + ext;
 
-    // Convert the File (Web API) to a Buffer (Node.js) for Supabase SDK
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("images")
       .upload(storagePath, fileBuffer, {
         contentType: file.type,
-        upsert: false, // fail if file already exists (path is unique, so this is fine)
+        upsert: false,
       });
 
     if (uploadError) {
       console.error("[/api/admin/upload] Supabase error:", uploadError);
       return NextResponse.json(
-        { error: `Supabase upload failed: ${uploadError.message}` },
+        { error: "Supabase upload failed: " + uploadError.message },
         { status: 500 }
       );
     }
 
-    // ── 7. Get the public CDN URL and return it ──────────────────────────
-    const { data: publicUrlData } = supabase.storage
+    // ── 7. Return the public URL ────────────────────────────────────────
+    const { data: urlData } = supabase.storage
       .from("images")
       .getPublicUrl(uploadData.path);
 
     return NextResponse.json({
       success: true,
       path: uploadData.path,
-      url: publicUrlData.publicUrl,
+      url: urlData.publicUrl,
       name: file.name,
     });
   } catch (err: unknown) {
-    // Catch-all for any unhandled error
     const message =
       err instanceof Error ? err.message : "An unexpected error occurred.";
     console.error("[/api/admin/upload] Unhandled error:", message);
