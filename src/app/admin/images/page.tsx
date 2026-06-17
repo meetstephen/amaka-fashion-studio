@@ -1,18 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Pencil, Trash2, X, Check } from "lucide-react";
+import { Upload, Pencil, Trash2, X, Check, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
+// ── Types ─────────────────────────────────────────────────────────────────
+
 interface ImageItem {
+  /** Local ID used for React keys and state management */
   id: number;
+  /** Display name of the image */
   name: string;
+  /** Category tag e.g. "collections", "lookbook", "hero" */
   category: string;
+  /** Tailwind gradient class shown as a placeholder when no URL is available */
   gradient: string;
+  /** Real Supabase Storage public URL — only set after a successful upload */
+  url?: string;
 }
 
-// TODO: Fetch from Supabase 'images' table
-const initialImages: ImageItem[] = [
+// ── Seed data (placeholder items shown before real images are fetched) ────
+// TODO: Replace this with a real Supabase query from the 'images' table.
+
+const SEED_IMAGES: ImageItem[] = [
   {
     id: 1,
     name: "Senator Wear Collection",
@@ -51,27 +61,93 @@ const initialImages: ImageItem[] = [
   },
 ];
 
+// ── Component ─────────────────────────────────────────────────────────────
+
 export default function AdminImagesPage() {
-  const [images, setImages] = useState<ImageItem[]>(initialImages);
+  const [images, setImages] = useState<ImageItem[]>(SEED_IMAGES);
+
+  // Upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Edit state
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState("");
+
+  // Delete confirmation state
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Upload to Supabase Storage
+  // ── Upload handler ───────────────────────────────────────────────────────
+  /**
+   * Sends the selected file to our secure server-side API route
+   * /api/admin/upload, which verifies the admin session cookie and
+   * then uploads to Supabase Storage using the service role key.
+   *
+   * The service role key bypasses all RLS — no Supabase policy change needed.
+   */
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
+    // Reset the input so the same file can be selected again later
+    e.target.value = "";
+
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("folder", "collections");
+
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: form,
+        // No Content-Type header — browser sets it automatically with
+        // the correct multipart boundary when body is FormData.
+      });
+
+      const result = await response.json() as {
+        success?: boolean;
+        url?: string;
+        path?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error ?? "Upload failed. Please try again.");
+      }
+
+      // Add the uploaded image to the top of the list
       const newImage: ImageItem = {
         id: Date.now(),
-        name: files[0].name.replace(/\.[^/.]+$/, ""),
+        name: file.name.replace(/\.[^/.]+$/, ""), // strip file extension from display name
         category: "uncategorized",
         gradient: "bg-gradient-to-br from-gray-400 to-gray-600",
+        url: result.url, // real Supabase CDN public URL
       };
-      setImages([newImage, ...images]);
+
+      setImages((prev) => [newImage, ...prev]);
+
+      // TODO: Also save a row to your Supabase 'images' table:
+      // import { supabase } from "@/lib/supabase";
+      // await supabase.from("images").insert({
+      //   name: newImage.name,
+      //   category: newImage.category,
+      //   url: result.url,
+      // });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
+      setUploadError(message);
+    } finally {
+      setUploading(false);
     }
-    e.target.value = "";
   };
+
+  // ── Edit handlers ────────────────────────────────────────────────────────
 
   const startEdit = (image: ImageItem) => {
     setEditingId(image.id);
@@ -80,9 +156,9 @@ export default function AdminImagesPage() {
   };
 
   const saveEdit = () => {
-    // TODO: Update in Supabase 'images' table
-    setImages(
-      images.map((img) =>
+    // TODO: Also update the row in Supabase 'images' table
+    setImages((prev) =>
+      prev.map((img) =>
         img.id === editingId
           ? { ...img, name: editName, category: editCategory }
           : img
@@ -91,14 +167,21 @@ export default function AdminImagesPage() {
     setEditingId(null);
   };
 
+  const cancelEdit = () => setEditingId(null);
+
+  // ── Delete handler ───────────────────────────────────────────────────────
+
   const handleDelete = (id: number) => {
-    // TODO: Delete from Supabase Storage and 'images' table
-    setImages(images.filter((img) => img.id !== id));
+    // TODO: Also delete from Supabase Storage and 'images' table
+    setImages((prev) => prev.filter((img) => img.id !== id));
     setDeleteConfirmId(null);
   };
 
+  // ── Render ───────────────────────────────────────────────────────────────
+
   return (
     <div>
+      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-heading font-bold text-black">
@@ -109,22 +192,59 @@ export default function AdminImagesPage() {
           </p>
         </div>
 
-        {/* Upload button */}
+        {/* Upload button — wraps a hidden file input */}
         <label
-          className="inline-flex items-center gap-2 px-5 min-h-[48px] bg-emerald text-cream rounded-lg hover:bg-emerald-dark transition-colors cursor-pointer font-medium"
           aria-label="Upload image"
+          className={[
+            "inline-flex items-center gap-2 px-5 min-h-[48px] rounded-lg font-medium transition-colors select-none",
+            uploading
+              ? "bg-emerald/60 text-cream cursor-not-allowed pointer-events-none"
+              : "bg-emerald text-cream hover:bg-emerald-dark cursor-pointer",
+          ].join(" ")}
         >
-          <Upload size={18} />
-          Upload Image
+          {uploading ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Uploading…
+            </>
+          ) : (
+            <>
+              <Upload size={18} />
+              Upload Image
+            </>
+          )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
             onChange={handleUpload}
+            disabled={uploading}
             className="hidden"
-            aria-label="Choose image file"
+            aria-label="Choose an image file to upload"
           />
         </label>
       </div>
+
+      {/* Upload error banner */}
+      {uploadError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800"
+        >
+          <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-500" />
+          <div className="flex-1">
+            <p className="font-semibold">Upload failed</p>
+            <p className="mt-1 text-red-600">{uploadError}</p>
+          </div>
+          <button
+            onClick={() => setUploadError(null)}
+            aria-label="Dismiss error"
+            className="shrink-0 text-red-400 hover:text-red-600 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Image grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -133,12 +253,22 @@ export default function AdminImagesPage() {
             key={image.id}
             className="bg-white rounded-xl border border-emerald/10 overflow-hidden shadow-sm"
           >
-            {/* Thumbnail */}
-            <div className={`aspect-video ${image.gradient}`} />
+            {/* Thumbnail: real image if URL available, gradient placeholder otherwise */}
+            {image.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={image.url}
+                alt={image.name}
+                className="aspect-video w-full object-cover"
+              />
+            ) : (
+              <div className={`aspect-video ${image.gradient}`} />
+            )}
 
-            {/* Info */}
+            {/* Card body */}
             <div className="p-4">
               {editingId === image.id ? (
+                /* ── Edit mode ── */
                 <div className="space-y-3">
                   <input
                     type="text"
@@ -171,8 +301,8 @@ export default function AdminImagesPage() {
                       Save
                     </button>
                     <button
-                      onClick={() => setEditingId(null)}
-                      className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1 border border-gray-300 text-black rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+                      onClick={cancelEdit}
+                      className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1 border border-gray-300 text-black rounded-md text-sm hover:bg-gray-50 transition-colors"
                       aria-label="Cancel editing"
                     >
                       <X size={16} />
@@ -181,10 +311,19 @@ export default function AdminImagesPage() {
                   </div>
                 </div>
               ) : (
+                /* ── View mode ── */
                 <>
-                  <h3 className="font-medium text-black text-sm truncate">
-                    {image.name}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-medium text-black text-sm truncate">
+                      {image.name}
+                    </h3>
+                    {image.url && (
+                      <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-medium text-emerald bg-emerald/10 px-2 py-0.5 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald" />
+                        Live
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-black/50 mt-1 capitalize">
                     {image.category}
                   </p>
@@ -197,6 +336,7 @@ export default function AdminImagesPage() {
                       <Pencil size={14} />
                       Edit
                     </button>
+
                     {deleteConfirmId === image.id ? (
                       <div className="flex-1 flex gap-1">
                         <button
