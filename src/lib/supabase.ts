@@ -15,3 +15,11 @@ export interface ImageRow { id: string; url: string; name: string; category: str
 export interface LookbookRow { id: string; image_url: string; title: string; caption: string; order: number; created_at: string; }
 export interface ContentRow { id: string; key: string; value: string; updated_at: string; }
 export interface FeaturedRow { id: string; image_url: string; title: string; subtitle: string; updated_at: string; }
+
+/**
+ * Returns true if Supabase environment variables are set.
+ * Used by upload utilities to gate Supabase operations.
+ */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(supabaseUrl && supabaseAnonKey);
+}
