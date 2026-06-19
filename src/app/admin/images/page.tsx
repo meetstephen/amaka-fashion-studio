@@ -90,10 +90,13 @@ export default function AdminImagesPage() {
       const target = event.target as HTMLInputElement;
       const files = target.files;
       const targetId = replaceTargetId;
-      console.log("[Upload] native change fired. files:", files?.length, "targetId:", targetId);
-      target.value = "";
       if (!files || files.length === 0) return;
-      void processFile(files[0], targetId);
+      // Capture the File object BEFORE clearing target.value — clearing the
+      // input resets the live FileList, which would make a post-clear
+      // files.length check silently see 0 and skip the upload entirely.
+      const selectedFile = files[0];
+      target.value = "";
+      void processFile(selectedFile, targetId);
     };
 
     input.addEventListener("change", handleNativeChange);
