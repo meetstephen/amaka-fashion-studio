@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Upload, Pencil, Trash2, X, Check, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -29,30 +29,13 @@ export default function AdminImagesPage() {
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-
   const [replaceTargetId, setReplaceTargetId] = useState<number | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const triggerAddUpload = () => {
-    setReplaceTargetId(null);
-    fileInputRef.current?.click();
-  };
-
-  const triggerReplaceUpload = (id: number) => {
-    setReplaceTargetId(id);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    const targetId = replaceTargetId;
-    e.target.value = "";
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
+  const processFile = useCallback(async (file: File, targetId: number | null) => {
     setUploading(true);
     setUploadError(null);
-
     try {
       const form = new FormData();
       form.append("file", file);
@@ -62,14 +45,11 @@ export default function AdminImagesPage() {
         method: "POST",
         body: form,
       });
-
       const data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(
-          typeof data.error === "string"
-            ? data.error
-            : "Upload failed. Please try again."
+          typeof data.error === "string" ? data.error : "Upload failed. Please try again."
         );
       }
 
@@ -99,6 +79,35 @@ export default function AdminImagesPage() {
       setUploading(false);
       setReplaceTargetId(null);
     }
+  }, []);
+
+  // Native DOM event listener — bypasses React's synthetic onChange entirely.
+  useEffect(() => {
+    const input = fileInputRef.current;
+    if (!input) return;
+
+    const handleNativeChange = (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const files = target.files;
+      const targetId = replaceTargetId;
+      console.log("[Upload] native change fired. files:", files?.length, "targetId:", targetId);
+      target.value = "";
+      if (!files || files.length === 0) return;
+      void processFile(files[0], targetId);
+    };
+
+    input.addEventListener("change", handleNativeChange);
+    return () => input.removeEventListener("change", handleNativeChange);
+  }, [replaceTargetId, processFile]);
+
+  const triggerAddUpload = () => {
+    setReplaceTargetId(null);
+    fileInputRef.current?.click();
+  };
+
+  const triggerReplaceUpload = (id: number) => {
+    setReplaceTargetId(id);
+    fileInputRef.current?.click();
   };
 
   const startEdit = (image: ImageItem) => {
@@ -127,7 +136,6 @@ export default function AdminImagesPage() {
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
-        onChange={handleFileSelected}
         className="hidden"
         aria-label="Choose an image file"
       />
