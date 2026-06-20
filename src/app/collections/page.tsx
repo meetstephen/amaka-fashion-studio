@@ -189,6 +189,7 @@ export default function CollectionsPage() {
                     </p>
                     <div className="mt-5 flex flex-col gap-2 sm:flex-row">
                       
+                      <a
                         href={`https://wa.me/2349131272407?text=${encodeURIComponent(
                           `Hello! I'm interested in "${item.name}" from your ${item.category} collection.`
                         )}`}
