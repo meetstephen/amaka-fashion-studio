@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Award, Gem, Quote, Scissors, Star } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import NewsletterCTA from "@/components/NewsletterCTA";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import {
   fadeInUp,
   fadeInLeft,
@@ -40,6 +42,25 @@ const values = [
 ];
 
 export default function AboutPage() {
+  const [ownerPhotoUrl, setOwnerPhotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadOwnerPhoto() {
+      if (!isSupabaseConfigured() || !supabase) return;
+      const { data, error } = await supabase
+        .from("images")
+        .select("url")
+        .eq("category", "about")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!error && data?.url) {
+        setOwnerPhotoUrl(data.url);
+      }
+    }
+    loadOwnerPhoto();
+  }, []);
+
   return (
     <section className="pt-28 pb-20 md:pt-36 md:pb-32 bg-cream min-h-screen grain-overlay">
       <BackButton />
@@ -65,23 +86,26 @@ export default function AboutPage() {
             className="md:col-span-5"
           >
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald via-emerald-dark to-black" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="font-heading text-8xl italic font-semibold text-gold">
-                    A
+              {ownerPhotoUrl ? (
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: "url(" + JSON.stringify(ownerPhotoUrl) + ")" }}
+                />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald via-emerald-dark to-black" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="font-heading text-8xl italic font-semibold text-gold">
+                        A
+                      </div>
+                      <div className="mt-3 text-[10px] uppercase tracking-[0.42em] text-cream/70">
+                        Est. Abakaliki &middot; MMXXIV
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.42em] text-cream/70">
-                    Est. Abakaliki · MMXXIV
-                  </div>
-                </div>
-              </div>
-              {/* TODO: This will display the owner's photo when Supabase storage is connected */}
-              <div className="absolute inset-0 flex items-end justify-center pb-4 pointer-events-none">
-                <span className="text-[9px] uppercase tracking-[0.3em] text-cream/40 bg-black/20 rounded-full px-3 py-1 backdrop-blur-sm">
-                  Tap to add photo
-                </span>
-              </div>
+                </>
+              )}
               <div className="absolute inset-0 -translate-x-3 translate-y-3 rounded-3xl border border-gold/30" />
             </div>
           </motion.div>
