@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Plus, Check, Ruler } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import {
   type CollectionItem,
 } from "@/data/collections";
 import { addItem, getItems } from "@/lib/inquiry-store";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function CollectionsPage() {
   const [filter, setFilter] = useState<Category | "All">("All");
@@ -22,6 +23,33 @@ export default function CollectionsPage() {
     return new Set(getItems().map((i) => i.id));
   });
   const [flashId, setFlashId] = useState<string | null>(null);
+  const [photoMap, setPhotoMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    async function loadPhotos() {
+      if (!isSupabaseConfigured() || !supabase) return;
+      const { data, error } = await supabase
+        .from("images")
+        .select("name, url")
+        .eq("category", "collections");
+      if (error || !data) return;
+
+      const map: Record<string, string> = {};
+      for (const item of COLLECTION_ITEMS) {
+        const match = data.find(
+          (row) =>
+            row.url &&
+            typeof row.name === "string" &&
+            row.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+        );
+        if (match?.url) {
+          map[item.id] = match.url;
+        }
+      }
+      setPhotoMap(map);
+    }
+    loadPhotos();
+  }, []);
 
   const visible = useMemo(() => {
     if (filter === "All") return COLLECTION_ITEMS;
@@ -121,6 +149,7 @@ export default function CollectionsPage() {
           {visible.map((item) => {
             const added = addedIds.has(item.id);
             const justAdded = flashId === item.id;
+            const photoUrl = photoMap[item.id];
             return (
               <motion.div
                 key={item.id}
@@ -134,7 +163,15 @@ export default function CollectionsPage() {
                   className="relative overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm flex flex-col h-full"
                 >
                   <div
-                    className={`relative aspect-[4/3] bg-gradient-to-br ${item.gradient}`}
+                    className={
+                      "relative aspect-[4/3] bg-cover bg-center " +
+                      (photoUrl ? "" : "bg-gradient-to-br " + item.gradient)
+                    }
+                    style={
+                      photoUrl
+                        ? { backgroundImage: "url(" + JSON.stringify(photoUrl) + ")" }
+                        : undefined
+                    }
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     <div className="absolute top-4 left-4">
@@ -151,7 +188,7 @@ export default function CollectionsPage() {
                       {item.description}
                     </p>
                     <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-                      <a
+                      
                         href={`https://wa.me/2349131272407?text=${encodeURIComponent(
                           `Hello! I'm interested in "${item.name}" from your ${item.category} collection.`
                         )}`}
