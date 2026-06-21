@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 interface HeroSlide {
   id: string;
@@ -96,6 +97,7 @@ export default function HeroCarousel() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const startX = useRef<number | null>(null);
+  const [slidePhotos, setSlidePhotos] = useState<Record<string, string>>({});
 
   // Tilt motion values for the editorial right column
   const tiltX = useMotionValue(0);
@@ -104,6 +106,30 @@ export default function HeroCarousel() {
   const springY = useSpring(tiltY, { stiffness: 80, damping: 15 });
   const rotateY = useTransform(springX, [-1, 1], [-6, 6]);
   const rotateX = useTransform(springY, [-1, 1], [4, -4]);
+
+  useEffect(() => {
+    async function loadHeroPhotos() {
+      if (!isSupabaseConfigured() || !supabase) return;
+      const { data, error } = await supabase
+        .from("images")
+        .select("name, url")
+        .eq("category", "hero");
+      if (error || !data) return;
+
+      const map: Record<string, string> = {};
+      for (const s of SLIDES) {
+        const match = data.find(
+          (row) =>
+            row.url &&
+            typeof row.name === "string" &&
+            row.name.toLowerCase().includes(s.id)
+        );
+        if (match?.url) map[s.id] = match.url;
+      }
+      setSlidePhotos(map);
+    }
+    loadHeroPhotos();
+  }, []);
 
   useEffect(() => {
     if (paused) return;
@@ -141,6 +167,7 @@ export default function HeroCarousel() {
   };
 
   const slide = SLIDES[active];
+  const photoUrl = slidePhotos[slide.id];
 
   return (
     <section
@@ -160,10 +187,18 @@ export default function HeroCarousel() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          className={`absolute inset-0 bg-gradient-to-br ${slide.gradient}`}
+          className={"absolute inset-0 bg-cover bg-center " + (photoUrl ? "" : "bg-gradient-to-br " + slide.gradient)}
+          style={photoUrl ? { backgroundImage: "url(" + JSON.stringify(photoUrl) + ")" } : undefined}
           aria-hidden
         />
       </AnimatePresence>
+
+      {photoUrl && (
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/55"
+        />
+      )}
 
       {/* Decorative orbs */}
       <div
@@ -208,20 +243,10 @@ export default function HeroCarousel() {
                 </p>
 
                 <div className="mt-10 flex flex-wrap items-center gap-4">
-                  <Link
-                    href={slide.ctaHref}
-                    target={slide.ctaHref.startsWith("http") ? "_blank" : undefined}
-                    rel={slide.ctaHref.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-black transition-all hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg min-h-[48px]"
-                  >
+                  <Link href={slide.ctaHref} target={slide.ctaHref.startsWith("http") ? "_blank" : undefined} rel={slide.ctaHref.startsWith("http") ? "noopener noreferrer" : undefined} className="inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-black transition-all hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg min-h-[48px]">
                     {slide.ctaLabel} <ArrowRight size={14} />
                   </Link>
-                  <Link
-                    href={slide.secondaryHref}
-                    target={slide.secondaryHref.startsWith("http") ? "_blank" : undefined}
-                    rel={slide.secondaryHref.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="inline-flex items-center gap-2 rounded-full border border-cream/30 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-cream transition-all hover:border-gold hover:text-gold hover:-translate-y-0.5 min-h-[48px]"
-                  >
+                  <Link href={slide.secondaryHref} target={slide.secondaryHref.startsWith("http") ? "_blank" : undefined} rel={slide.secondaryHref.startsWith("http") ? "noopener noreferrer" : undefined} className="inline-flex items-center gap-2 rounded-full border border-cream/30 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-cream transition-all hover:border-gold hover:text-gold hover:-translate-y-0.5 min-h-[48px]">
                     {slide.secondaryLabel}
                   </Link>
                 </div>
