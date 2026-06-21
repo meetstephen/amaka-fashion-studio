@@ -2,7 +2,17 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, Mail, MapPin, MessageCircle, Phone, Ruler, Send } from "lucide-react";
+import {
+  Check,
+  Clock,
+  Copy,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Ruler,
+  Send,
+} from "lucide-react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import FaqAccordion from "@/components/FaqAccordion";
@@ -12,6 +22,8 @@ import {
   staggerItem,
 } from "@/lib/animations";
 
+const CONTACT_EMAIL = "lucynwoka959@gmail.com";
+
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
@@ -19,14 +31,57 @@ export default function ContactPage() {
     phone: "",
     message: "",
   });
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable in this context - silently ignore
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const message = `Hello Amaka Fashion Atelier!\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nMessage: ${formData.message}`;
+
+    // Open WhatsApp immediately - unchanged, never blocked by email status
+    const waMessage = `Hello Amaka Fashion Atelier!\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nMessage: ${formData.message}`;
     window.open(
-      `https://wa.me/2349131272407?text=${encodeURIComponent(message)}`,
+      `https://wa.me/2349131272407?text=${encodeURIComponent(waMessage)}`,
       "_blank"
     );
+
+    // Also send a real email in the background - does not block WhatsApp
+    setSending(true);
+    setSendError(null);
+    setSendSuccess(false);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : "Could not send email."
+        );
+      }
+      setSendSuccess(true);
+    } catch (err: unknown) {
+      setSendError(
+        err instanceof Error
+          ? err.message
+          : "Could not send the email, but your WhatsApp message went through."
+      );
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -69,12 +124,7 @@ export default function ContactPage() {
                 questions, or book a fitting. We typically respond within
                 minutes.
               </p>
-              <a
-                href="https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier!%20I%27d%20like%20to%20make%20an%20enquiry."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-cream px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-emerald transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg min-h-[44px]"
-              >
+              <a href="https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier!%20I%27d%20like%20to%20make%20an%20enquiry." target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full bg-cream px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-emerald transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg min-h-[44px]">
                 <MessageCircle size={16} />
                 +234 913 127 2407
               </a>
@@ -114,10 +164,7 @@ export default function ContactPage() {
                   <h4 className="font-heading text-lg font-semibold text-black">
                     Call Us
                   </h4>
-                  <a
-                    href="tel:+2349131272407"
-                    className="mt-1 text-sm text-emerald hover:text-emerald-dark transition-colors"
-                  >
+                  <a href="tel:+2349131272407" className="mt-1 text-sm text-emerald hover:text-emerald-dark transition-colors">
                     +234 913 127 2407
                   </a>
                 </div>
@@ -132,18 +179,25 @@ export default function ContactPage() {
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald/10">
                   <Mail size={18} className="text-emerald" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h4 className="font-heading text-lg font-semibold text-black">
                     Email Us
                   </h4>
-                  <a
-                    href="mailto:lucynwoka959@gmail.com"
-                    className="mt-1 block text-sm text-emerald hover:text-emerald-dark transition-colors break-all"
-                  >
-                    lucynwoka959@gmail.com
-                  </a>
+                  <div className="mt-1 flex items-center gap-2">
+                    <a href={`mailto:${CONTACT_EMAIL}`} className="text-sm text-emerald hover:text-emerald-dark transition-colors break-all">
+                      {CONTACT_EMAIL}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={copyEmail}
+                      aria-label="Copy email address"
+                      className="shrink-0 inline-flex items-center justify-center h-7 w-7 rounded-full text-emerald/60 hover:text-emerald hover:bg-emerald/10 transition-colors"
+                    >
+                      {copied ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-black/50">
-                    For detailed enquiries &amp; commissions
+                    {copied ? "Copied to clipboard!" : "For detailed enquiries & commissions"}
                   </p>
                 </div>
               </div>
@@ -279,18 +333,33 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald px-6 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-cream transition-all duration-300 hover:bg-emerald-dark hover:-translate-y-0.5 hover:shadow-lg min-h-[48px]"
+                  disabled={sending}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald px-6 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-cream transition-all duration-300 hover:bg-emerald-dark hover:-translate-y-0.5 hover:shadow-lg min-h-[48px] disabled:opacity-70"
                 >
                   <Send size={16} />
                   Send via WhatsApp
                 </button>
 
+                {sending && (
+                  <p className="text-center text-xs text-black/50">
+                    Also sending you a copy by email...
+                  </p>
+                )}
+                {sendSuccess && (
+                  <p className="text-center text-xs text-emerald flex items-center justify-center gap-1.5">
+                    <Check size={12} />
+                    Email sent to our team as well.
+                  </p>
+                )}
+                {sendError && (
+                  <p className="text-center text-xs text-black/50">
+                    {sendError}
+                  </p>
+                )}
+
                 <p className="text-center text-xs text-black/50">
                   Prefer email?{" "}
-                  <a
-                    href="mailto:lucynwoka959@gmail.com"
-                    className="font-medium text-emerald hover:text-emerald-dark transition-colors"
-                  >
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-emerald hover:text-emerald-dark transition-colors">
                     Write to us directly
                   </a>
                 </p>
@@ -334,10 +403,7 @@ export default function ContactPage() {
               Get perfectly fitted garments by submitting your body measurements online.
               Our tailors will use them to craft your bespoke pieces.
             </p>
-            <Link
-              href="/measurements"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-black transition-all hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg min-h-[48px]"
-            >
+            <Link href="/measurements" className="mt-6 inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-xs font-medium uppercase tracking-[0.22em] text-black transition-all hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-lg min-h-[48px]">
               <Ruler size={14} />
               Submit Measurements
             </Link>
