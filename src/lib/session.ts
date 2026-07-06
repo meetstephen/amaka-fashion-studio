@@ -28,7 +28,13 @@ export async function verifySessionToken(
   // Verify signature
   const payload = `${id}.${exp}`;
   const expectedSignature = await computeSignature(payload, secret);
-  return signature === expectedSignature;
+  // Timing-safe comparison to prevent signature-length/content leakage
+  if (signature.length !== expectedSignature.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < signature.length; i++) {
+    mismatch |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 async function computeSignature(

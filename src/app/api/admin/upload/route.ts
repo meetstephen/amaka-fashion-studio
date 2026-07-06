@@ -30,7 +30,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const secret = process.env.SESSION_SECRET ?? "default-dev-secret";
+    const secret = process.env.SESSION_SECRET;
+    if (!secret) {
+      console.error("[/api/admin/upload] SESSION_SECRET is not configured.");
+      return NextResponse.json({ error: "Server misconfiguration." }, { status: 500 });
+    }
     const isValid = await verifySessionToken(sessionCookie.value, secret);
 
     if (!isValid) {

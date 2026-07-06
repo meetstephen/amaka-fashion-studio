@@ -37,7 +37,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Subject to Row Level Security policies.
  * Safe for server components and API routes.
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-anon-key"
+);
 
 /**
  * Returns true if the required Supabase env vars are present.
