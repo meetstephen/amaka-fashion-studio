@@ -39,6 +39,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
  */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+/**
+ * Returns true if the required Supabase env vars are present.
+ * Use this to guard read/write operations before calling `supabase`.
+ */
+export const isSupabaseConfigured = (): boolean =>
+  Boolean(supabaseUrl && supabaseAnonKey);
+
 // ── Table row types ─────────────────────────────────────────────────────────
 
 export interface ImageRow {
