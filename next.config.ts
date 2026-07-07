@@ -37,6 +37,25 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Prevent search engines from indexing admin UI and admin APIs
+      {
+        source: "/admin/:path*",
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive",
+          },
+        ],
+      },
+      {
+        source: "/api/admin/:path*",
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive",
+          },
+        ],
+      },
     ];
   },
 };

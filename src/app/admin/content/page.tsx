@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Save, Check } from "lucide-react";
 import Link from "next/link";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 interface ContentSection {
   id: string;
@@ -11,58 +12,39 @@ interface ContentSection {
   saved: boolean;
 }
 
+const defaultSections: ContentSection[] = [
+  { id: "tagline", label: "Homepage Tagline", value: "Where Heritage Meets Distinction", saved: false },
+  { id: "collection_senator", label: "Senator Wear Collection - Description", value: "Premium senator wear crafted with precision. Each piece features hand-finished details and luxurious fabrics that honor Nigerian sartorial tradition.", saved: false },
+  { id: "collection_suits", label: "Bespoke Suits - Description", value: "Tailored to perfection, our bespoke suits blend contemporary silhouettes with traditional craftsmanship for the modern Nigerian gentleman.", saved: false },
+  { id: "collection_shirts", label: "Premium Shirts - Description", value: "Expertly tailored shirts in the finest fabrics, designed for the man who appreciates quality in every stitch.", saved: false },
+  { id: "collection_kaftan", label: "Kaftan Collection - Description", value: "Flowing elegance meets modern design. Our kaftans are reimagined with contemporary cuts while preserving cultural authenticity.", saved: false },
+  { id: "about_story", label: "About Page - Our Story", value: "Founded in the heart of Abakaliki, Ebonyi State, Amaka Fashion Atelier represents the pinnacle of Nigerian menswear craftsmanship. Every garment tells a story of heritage, precision, and modern elegance. Our master tailors bring decades of experience to each piece, ensuring every stitch reflects our commitment to excellence.", saved: false },
+  { id: "about_mission", label: "About Page - Mission", value: "To elevate Nigerian menswear to the world stage, blending the rich cultural heritage of Igbo craftsmanship with contemporary luxury fashion. We believe every man deserves to wear garments that reflect his heritage and status.", saved: false },
+];
+
 export default function AdminContentPage() {
-  // TODO: Fetch from Supabase 'content' table
-  const [sections, setSections] = useState<ContentSection[]>([
-    {
-      id: "tagline",
-      label: "Homepage Tagline",
-      value: "Where Heritage Meets Distinction",
-      saved: false,
-    },
-    {
-      id: "collection_senator",
-      label: "Senator Wear Collection - Description",
-      value:
-        "Premium senator wear crafted with precision. Each piece features hand-finished details and luxurious fabrics that honor Nigerian sartorial tradition.",
-      saved: false,
-    },
-    {
-      id: "collection_suits",
-      label: "Bespoke Suits - Description",
-      value:
-        "Tailored to perfection, our bespoke suits blend contemporary silhouettes with traditional craftsmanship for the modern Nigerian gentleman.",
-      saved: false,
-    },
-    {
-      id: "collection_shirts",
-      label: "Premium Shirts - Description",
-      value:
-        "Expertly tailored shirts in the finest fabrics, designed for the man who appreciates quality in every stitch.",
-      saved: false,
-    },
-    {
-      id: "collection_kaftan",
-      label: "Kaftan Collection - Description",
-      value:
-        "Flowing elegance meets modern design. Our kaftans are reimagined with contemporary cuts while preserving cultural authenticity.",
-      saved: false,
-    },
-    {
-      id: "about_story",
-      label: "About Page - Our Story",
-      value:
-        "Founded in the heart of Abakaliki, Ebonyi State, Amaka Fashion Atelier represents the pinnacle of Nigerian menswear craftsmanship. Every garment tells a story of heritage, precision, and modern elegance. Our master tailors bring decades of experience to each piece, ensuring every stitch reflects our commitment to excellence.",
-      saved: false,
-    },
-    {
-      id: "about_mission",
-      label: "About Page - Mission",
-      value:
-        "To elevate Nigerian menswear to the world stage, blending the rich cultural heritage of Igbo craftsmanship with contemporary luxury fashion. We believe every man deserves to wear garments that reflect his heritage and status.",
-      saved: false,
-    },
-  ]);
+  const [sections, setSections] = useState<ContentSection[]>(defaultSections);
+
+  useEffect(() => {
+    async function loadData() {
+      if (isSupabaseConfigured() && supabase) {
+        const { data, error } = await supabase.from("content").select("*");
+        if (!error && data && data.length > 0) {
+          const contentMap = new Map(data.map((row) => [row.key, row.value]));
+          setSections(
+            defaultSections.map((s) => ({
+              ...s,
+              value: contentMap.get(s.id) ?? s.value,
+              saved: false,
+            }))
+          );
+          return;
+        }
+      }
+      setSections(defaultSections);
+    }
+    loadData();
+  }, []);
 
   const handleChange = (id: string, newValue: string) => {
     setSections(
@@ -72,9 +54,20 @@ export default function AdminContentPage() {
     );
   };
 
-  const handleSave = (id: string) => {
-    // TODO: Save to Supabase 'content' table with key=id, value=value
-    setSections(sections.map((s) => (s.id === id ? { ...s, saved: true } : s)));
+  const handleSave = async (id: string) => {
+    const section = sections.find((s) => s.id === id);
+    if (!section) return;
+
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase
+        .from("content")
+        .upsert({ key: id, value: section.value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      if (!error) {
+        setSections((prev) => prev.map((s) => (s.id === id ? { ...s, saved: true } : s)));
+        return;
+      }
+    }
+    setSections((prev) => prev.map((s) => (s.id === id ? { ...s, saved: true } : s)));
   };
 
   return (

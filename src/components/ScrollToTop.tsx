@@ -19,6 +19,7 @@ export default function ScrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Stack: WhatsApp (bottom-6) > ChatBot (bottom-24) > ScrollToTop (bottom-44)
   return (
     <AnimatePresence>
       {visible && (
@@ -29,7 +30,7 @@ export default function ScrollToTop() {
           transition={{ duration: 0.2 }}
           onClick={scrollToTop}
           aria-label="Scroll to top"
-          className="fixed bottom-6 right-6 z-50 grid h-12 w-12 place-items-center rounded-full bg-emerald text-cream shadow-lg ring-2 ring-gold/40 transition-all duration-300 hover:bg-emerald-dark hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+          className="fixed bottom-44 right-6 z-30 grid h-12 w-12 place-items-center rounded-full bg-charcoal text-cream shadow-lg ring-1 ring-gold/40 transition-all duration-300 hover:bg-black hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
         >
           <ChevronUp size={22} />
         </motion.button>

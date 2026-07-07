@@ -1,0 +1,11 @@
+name: Supabase Keep-Alive
+on:
+  schedule:
+    - cron: "0 6 */3 * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping keep-alive endpoint
+        run: curl -f https://amaka-fashion-atelier.vercel.app/api/keepalive
