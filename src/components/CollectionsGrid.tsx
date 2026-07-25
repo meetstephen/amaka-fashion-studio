@@ -4,23 +4,24 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getPlacementMap } from "@/lib/placements";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 
 interface CollectionCard {
   name: string;
   line: string;
   gradient: string;
+  slotKey: string;
   photoUrl: string | null;
 }
 
 const BASE_COLLECTIONS: Omit<CollectionCard, "photoUrl">[] = [
-  { name: "Senator Wear", line: "The garment of statesmen.", gradient: "from-emerald to-emerald-dark" },
-  { name: "Bespoke Suits", line: "A second skin in worsted wool.", gradient: "from-emerald-dark to-black" },
-  { name: "Shirts", line: "Egyptian cotton. French linen.", gradient: "from-black to-emerald" },
-  { name: "Casual", line: "Off-duty, never off-form.", gradient: "from-emerald-light to-emerald" },
-  { name: "Traditional", line: "Heritage rendered in thread.", gradient: "from-emerald to-black" },
-  { name: "Corporate", line: "Authority, lined in Ankara.", gradient: "from-black to-emerald-dark" },
+  { name: "Senator Wear", line: "The garment of statesmen.", gradient: "from-emerald to-emerald-dark", slotKey: "home:collections:senator-wear" },
+  { name: "Bespoke Suits", line: "A second skin in worsted wool.", gradient: "from-emerald-dark to-black", slotKey: "home:collections:bespoke-suits" },
+  { name: "Shirts", line: "Egyptian cotton. French linen.", gradient: "from-black to-emerald", slotKey: "home:collections:shirts" },
+  { name: "Casual", line: "Off-duty, never off-form.", gradient: "from-emerald-light to-emerald", slotKey: "home:collections:casual" },
+  { name: "Traditional", line: "Heritage rendered in thread.", gradient: "from-emerald to-black", slotKey: "home:collections:traditional" },
+  { name: "Corporate", line: "Authority, lined in Ankara.", gradient: "from-black to-emerald-dark", slotKey: "home:collections:corporate" },
 ];
 
 export default function CollectionsGrid() {
@@ -29,27 +30,14 @@ export default function CollectionsGrid() {
   );
 
   useEffect(() => {
-    async function loadPhotos() {
-      if (!isSupabaseConfigured() || !supabase) return;
-      const { data, error } = await supabase
-        .from("images")
-        .select("name, url")
-        .eq("category", "collections");
-      if (error || !data) return;
-
+    getPlacementMap(BASE_COLLECTIONS.map((c) => c.slotKey)).then((placementMap) => {
       setCollections((prev) =>
-        prev.map((card) => {
-          const match = data.find(
-            (row) =>
-              row.url &&
-              (row.name?.toLowerCase().includes(card.name.toLowerCase()) ||
-                card.name.toLowerCase().includes((row.name ?? "").toLowerCase()))
-          );
-          return match ? { ...card, photoUrl: match.url } : card;
-        })
+        prev.map((card) => ({
+          ...card,
+          photoUrl: placementMap[card.slotKey] ?? null,
+        }))
       );
-    }
-    loadPhotos();
+    });
   }, []);
 
   return (

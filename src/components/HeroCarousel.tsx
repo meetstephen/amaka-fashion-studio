@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getPlacementMap } from "@/lib/placements";
 
 interface HeroSlide {
   id: string;
@@ -16,11 +16,11 @@ interface HeroSlide {
   secondaryLabel: string;
   secondaryHref: string;
   gradient: string;
-  /** Editorial right-column data (desktop only) */
   portraitGradient: string;
   portraitLabel: string;
   fabricName: string;
   fabricOrigin: string;
+  slotKey: string;
 }
 
 const SLIDES: HeroSlide[] = [
@@ -46,6 +46,7 @@ const SLIDES: HeroSlide[] = [
     portraitLabel: "The Atelier · Heritage",
     fabricName: "Italian Wool",
     fabricOrigin: "Premium · 14oz",
+    slotKey: "home:hero:heritage",
   },
   {
     id: "senator",
@@ -67,6 +68,7 @@ const SLIDES: HeroSlide[] = [
     portraitLabel: "Senator · Statesman",
     fabricName: "Aso-Oke",
     fabricOrigin: "Hand-Woven · Abakaliki",
+    slotKey: "home:hero:senator",
   },
   {
     id: "wedding",
@@ -88,6 +90,7 @@ const SLIDES: HeroSlide[] = [
     portraitLabel: "Wedding · Ceremony",
     fabricName: "Bullion Gold",
     fabricOrigin: "24K Thread · Hand-Laid",
+    slotKey: "home:hero:wedding",
   },
 ];
 
@@ -99,7 +102,6 @@ export default function HeroCarousel() {
   const startX = useRef<number | null>(null);
   const [slidePhotos, setSlidePhotos] = useState<Record<string, string>>({});
 
-  // Tilt motion values for the editorial right column
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
   const springX = useSpring(tiltX, { stiffness: 80, damping: 15 });
@@ -108,27 +110,14 @@ export default function HeroCarousel() {
   const rotateX = useTransform(springY, [-1, 1], [4, -4]);
 
   useEffect(() => {
-    async function loadHeroPhotos() {
-      if (!isSupabaseConfigured() || !supabase) return;
-      const { data, error } = await supabase
-        .from("images")
-        .select("name, url")
-        .eq("category", "hero");
-      if (error || !data) return;
-
+    getPlacementMap(SLIDES.map((s) => s.slotKey)).then((placementMap) => {
       const map: Record<string, string> = {};
       for (const s of SLIDES) {
-        const match = data.find(
-          (row) =>
-            row.url &&
-            typeof row.name === "string" &&
-            row.name.toLowerCase().includes(s.id)
-        );
-        if (match?.url) map[s.id] = match.url;
+        const url = placementMap[s.slotKey];
+        if (url) map[s.id] = url;
       }
       setSlidePhotos(map);
-    }
-    loadHeroPhotos();
+    });
   }, []);
 
   useEffect(() => {
@@ -179,7 +168,6 @@ export default function HeroCarousel() {
       aria-roledescription="carousel"
       aria-label="Featured collections"
     >
-      {/* Slide background */}
       <AnimatePresence mode="sync">
         <motion.div
           key={slide.id}
@@ -200,7 +188,6 @@ export default function HeroCarousel() {
         />
       )}
 
-      {/* Decorative orbs */}
       <div
         aria-hidden
         className="pointer-events-none absolute -right-32 -top-32 h-[520px] w-[520px] rounded-full bg-gold/10 blur-3xl"
@@ -210,10 +197,8 @@ export default function HeroCarousel() {
         className="pointer-events-none absolute -bottom-40 -left-32 h-[460px] w-[460px] rounded-full bg-emerald-light/15 blur-3xl"
       />
 
-      {/* Content */}
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-32 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-14 items-center">
-          {/* LEFT: copy column */}
           <div className="md:col-span-7 lg:col-span-7">
             <AnimatePresence mode="wait">
               <motion.div
@@ -254,7 +239,6 @@ export default function HeroCarousel() {
             </AnimatePresence>
           </div>
 
-          {/* RIGHT: editorial column - desktop only */}
           <div
             className="hidden md:block md:col-span-5 lg:col-span-5"
             style={{ perspective: 1200 }}
@@ -267,7 +251,6 @@ export default function HeroCarousel() {
               whileHover={{ y: -4 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Portrait card */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={slide.id}
@@ -277,19 +260,16 @@ export default function HeroCarousel() {
                   transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                   className={`relative aspect-[3/4] w-full overflow-hidden rounded-sm border border-gold/30 bg-gradient-to-br ${slide.portraitGradient} shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]`}
                 >
-                  {/* Inner gold-ring frame */}
                   <div
                     aria-hidden
                     className="absolute inset-3 border border-gold/15 pointer-events-none"
                   />
 
-                  {/* Soft vignette */}
                   <div
                     aria-hidden
                     className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none"
                   />
 
-                  {/* Subtle vertical hairlines (editorial spread feel) */}
                   <div
                     aria-hidden
                     className="absolute inset-y-6 left-8 w-px bg-gradient-to-b from-transparent via-gold/30 to-transparent"
@@ -299,14 +279,12 @@ export default function HeroCarousel() {
                     className="absolute inset-y-6 right-8 w-px bg-gradient-to-b from-transparent via-gold/30 to-transparent"
                   />
 
-                  {/* Center monogram */}
                   <div className="absolute inset-0 grid place-items-center">
                     <div className="font-heading italic text-gold/30 text-7xl select-none">
                       A
                     </div>
                   </div>
 
-                  {/* Bottom overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between gap-3">
                     <div>
                       <p className="text-[9px] uppercase tracking-[0.32em] text-gold/80 mb-1">
@@ -329,7 +307,6 @@ export default function HeroCarousel() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Floating fabric swatch card - top right */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`fabric-${slide.id}`}
@@ -359,7 +336,6 @@ export default function HeroCarousel() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Atelier stamp - bottom left, slowly rotating gold ring */}
               <div
                 style={{ transform: "translateZ(60px)" }}
                 className="absolute -left-4 -bottom-4 lg:-left-8 lg:-bottom-6 h-24 w-24"
@@ -404,7 +380,6 @@ export default function HeroCarousel() {
                     </text>
                   </svg>
                 </motion.div>
-                {/* Static center monogram */}
                 <div className="absolute inset-0 grid place-items-center pointer-events-none">
                   <span className="font-heading italic text-gold text-2xl">
                     A
@@ -416,7 +391,6 @@ export default function HeroCarousel() {
         </div>
       </div>
 
-      {/* Pagination dots */}
       <div className="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 gap-2.5">
         {SLIDES.map((s, i) => (
           <button
