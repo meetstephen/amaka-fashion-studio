@@ -13,6 +13,7 @@ import {
   ClipboardList,
   CalendarDays,
   Users,
+  LayoutGrid,
 } from "lucide-react";
 
 interface Section {
@@ -59,6 +60,14 @@ const sections: Section[] = [
     group: "Operations",
   },
   // Content
+  {
+    href: "/admin/placements",
+    title: "Placements",
+    description: "Choose exactly where each uploaded photo appears on the site",
+    icon: LayoutGrid,
+    gradient: "from-black to-emerald-dark",
+    group: "Content",
+  },
   {
     href: "/admin/images",
     title: "Images",
