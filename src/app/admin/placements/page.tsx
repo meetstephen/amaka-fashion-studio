@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { Check, ImageOff, X } from "lucide-react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { Check, ImageOff, Loader2, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -26,8 +26,12 @@ export default function AdminPlacementsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pickerForSlot, setPickerForSlot] = useState<string | null>(null);
   const [savingSlot, setSavingSlot] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const loadAll = async () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadAll = useCallback(async () => {
     setLoadError(null);
     if (!isSupabaseConfigured() || !supabase) {
       setLoadError("Supabase is not configured.");
@@ -57,11 +61,11 @@ export default function AdminPlacementsPage() {
 
     setPlacements(placementsRes.data as unknown as PlacementRecord[]);
     setImages((imagesRes.data ?? []) as ImageOption[]);
-  };
+  }, []);
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [loadAll]);
 
   const grouped = useMemo(() => {
     if (!placements) return [];
@@ -90,16 +94,97 @@ export default function AdminPlacementsPage() {
     setPickerForSlot(null);
   };
 
+  const uploadAndAssign = useCallback(
+    async (file: File, slotKey: string) => {
+      if (!supabase) return;
+      setUploading(true);
+      setUploadError(null);
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("folder", "collections");
+
+        const response = await fetch("/api/admin/upload", {
+          method: "POST",
+          body: form,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(
+            typeof data.error === "string" ? data.error : "Upload failed."
+          );
+        }
+
+        const { data: newRow, error: insertError } = await supabase
+          .from("images")
+          .insert({
+            name: file.name.replace(/\.[^/.]+$/, ""),
+            category: "uncategorized",
+            url: data.url,
+          })
+          .select()
+          .single();
+
+        if (insertError || !newRow) {
+          throw new Error(
+            "Photo saved, but could not create its record: " +
+              (insertError?.message ?? "unknown error")
+          );
+        }
+
+        await assignImage(slotKey, newRow.id);
+      } catch (err: unknown) {
+        setUploadError(
+          err instanceof Error ? err.message : "An unexpected error occurred."
+        );
+      } finally {
+        setUploading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  useEffect(() => {
+    const input = fileInputRef.current;
+    if (!input) return;
+
+    const handleNativeChange = (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const files = target.files;
+      const slotKey = pickerForSlot;
+      if (!files || files.length === 0 || !slotKey) return;
+      const selectedFile = files[0];
+      target.value = "";
+      void uploadAndAssign(selectedFile, slotKey);
+    };
+
+    input.addEventListener("change", handleNativeChange);
+    return () => input.removeEventListener("change", handleNativeChange);
+  }, [pickerForSlot, uploadAndAssign]);
+
+  const triggerUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+        className="hidden"
+        aria-label="Choose a new photo from your device"
+      />
+
       <div className="mb-8">
         <h2 className="text-2xl font-heading font-bold text-black">
           Page Placements
         </h2>
         <p className="text-black/60 text-sm mt-1">
-          Decide exactly where every uploaded photo appears on the site. No
-          filenames, no categories to remember - just tap a slot, pick a
-          photo.
+          Decide exactly where every photo appears on the site. Tap a slot,
+          then either pick an existing photo or upload a new one from your
+          gallery or camera.
         </p>
       </div>
 
@@ -145,7 +230,10 @@ export default function AdminPlacementsPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setPickerForSlot(p.slot_key)}
+                    onClick={() => {
+                      setUploadError(null);
+                      setPickerForSlot(p.slot_key);
+                    }}
                     className="mt-2 w-full min-h-[40px] rounded-md border border-emerald/30 text-emerald text-xs font-medium hover:bg-emerald/5 transition-colors"
                   >
                     {p.images?.url ? "Change Photo" : "Assign Photo"}
@@ -160,7 +248,7 @@ export default function AdminPlacementsPage() {
       {pickerForSlot && (
         <div
           className="fixed inset-0 z-[80] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-6"
-          onClick={() => setPickerForSlot(null)}
+          onClick={() => !uploading && setPickerForSlot(null)}
         >
           <div
             className="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col"
@@ -171,17 +259,43 @@ export default function AdminPlacementsPage() {
               <button
                 type="button"
                 onClick={() => setPickerForSlot(null)}
+                disabled={uploading}
                 aria-label="Close"
-                className="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5"
+                className="h-9 w-9 grid place-items-center rounded-full hover:bg-black/5 disabled:opacity-40"
               >
                 <X size={18} />
               </button>
             </div>
+
+            <div className="p-4 border-b border-black/5">
+              <button
+                type="button"
+                onClick={triggerUpload}
+                disabled={uploading}
+                className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 rounded-lg bg-emerald text-cream text-sm font-medium hover:bg-emerald-dark transition-colors disabled:opacity-70"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={18} />
+                    Upload New Photo (Gallery or Camera)
+                  </>
+                )}
+              </button>
+              {uploadError && (
+                <p className="mt-2 text-xs text-red-600">{uploadError}</p>
+              )}
+            </div>
+
             <div className="overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => assignImage(pickerForSlot, null)}
-                disabled={savingSlot === pickerForSlot}
+                disabled={savingSlot === pickerForSlot || uploading}
                 className="aspect-square rounded-lg border-2 border-dashed border-black/15 flex flex-col items-center justify-center gap-1 text-black/50 hover:border-emerald hover:text-emerald transition-colors text-xs"
               >
                 <ImageOff size={20} />
@@ -192,7 +306,7 @@ export default function AdminPlacementsPage() {
                   key={img.id}
                   type="button"
                   onClick={() => assignImage(pickerForSlot, img.id)}
-                  disabled={savingSlot === pickerForSlot || !img.url}
+                  disabled={savingSlot === pickerForSlot || uploading || !img.url}
                   className="relative aspect-square rounded-lg overflow-hidden border border-black/10 bg-gray-100 bg-cover bg-center disabled:opacity-40"
                   style={img.url ? { backgroundImage: "url(" + JSON.stringify(img.url) + ")" } : undefined}
                 >
