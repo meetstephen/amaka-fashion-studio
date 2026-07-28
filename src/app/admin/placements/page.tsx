@@ -20,6 +20,11 @@ interface ImageOption {
   url: string | null;
 }
 
+function shortLabel(label: string): string {
+  const parts = label.split(" — ");
+  return parts.length > 1 ? parts[1] : label;
+}
+
 export default function AdminPlacementsPage() {
   const [placements, setPlacements] = useState<PlacementRecord[] | null>(null);
   const [images, setImages] = useState<ImageOption[]>([]);
@@ -28,8 +33,14 @@ export default function AdminPlacementsPage() {
   const [savingSlot, setSavingSlot] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2200);
+  };
 
   const loadAll = useCallback(async () => {
     setLoadError(null);
@@ -92,6 +103,7 @@ export default function AdminPlacementsPage() {
     await loadAll();
     setSavingSlot(null);
     setPickerForSlot(null);
+    showToast(imageId ? "Photo updated! Check the live site." : "Photo cleared.");
   };
 
   const uploadAndAssign = useCallback(
@@ -179,12 +191,11 @@ export default function AdminPlacementsPage() {
 
       <div className="mb-8">
         <h2 className="text-2xl font-heading font-bold text-black">
-          Page Placements
+          Manage Photos
         </h2>
         <p className="text-black/60 text-sm mt-1">
-          Decide exactly where every photo appears on the site. Tap a slot,
-          then either pick an existing photo or upload a new one from your
-          gallery or camera.
+          Tap any photo below to change it. Pick from your gallery, take a
+          new one with your camera, or reuse a photo you already added.
         </p>
       </div>
 
@@ -196,7 +207,7 @@ export default function AdminPlacementsPage() {
       )}
 
       {placements === null && !loadError && (
-        <p className="text-black/50 py-10 text-center">Loading placements...</p>
+        <p className="text-black/50 py-10 text-center">Loading your photos...</p>
       )}
 
       {grouped.map(([groupName, rows]) => (
@@ -204,14 +215,19 @@ export default function AdminPlacementsPage() {
           <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald mb-3">
             {groupName}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {rows.map((p) => (
-              <div
+              <button
                 key={p.slot_key}
-                className="bg-white rounded-xl border border-emerald/10 overflow-hidden shadow-sm"
+                type="button"
+                onClick={() => {
+                  setUploadError(null);
+                  setPickerForSlot(p.slot_key);
+                }}
+                className="text-left bg-white rounded-xl border border-emerald/10 overflow-hidden shadow-sm hover:border-emerald/40 hover:shadow-md transition-all"
               >
                 <div
-                  className="aspect-video w-full bg-cover bg-center bg-gray-100"
+                  className="aspect-square w-full bg-cover bg-center bg-gray-100 relative"
                   style={
                     p.images?.url
                       ? { backgroundImage: "url(" + JSON.stringify(p.images.url) + ")" }
@@ -219,27 +235,20 @@ export default function AdminPlacementsPage() {
                   }
                 >
                   {!p.images?.url && (
-                    <div className="h-full w-full flex items-center justify-center text-black/30 text-xs">
-                      No photo assigned
+                    <div className="h-full w-full flex flex-col items-center justify-center text-emerald/50 gap-1.5">
+                      <Upload size={22} />
+                      <span className="text-[10px] font-medium uppercase tracking-wide">
+                        Tap to add
+                      </span>
                     </div>
                   )}
                 </div>
-                <div className="p-3">
-                  <p className="text-sm font-medium text-black truncate">
-                    {p.slot_label}
+                <div className="p-2.5">
+                  <p className="text-xs font-medium text-black truncate">
+                    {shortLabel(p.slot_label)}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUploadError(null);
-                      setPickerForSlot(p.slot_key);
-                    }}
-                    className="mt-2 w-full min-h-[40px] rounded-md border border-emerald/30 text-emerald text-xs font-medium hover:bg-emerald/5 transition-colors"
-                  >
-                    {p.images?.url ? "Change Photo" : "Assign Photo"}
-                  </button>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -272,7 +281,7 @@ export default function AdminPlacementsPage() {
                 type="button"
                 onClick={triggerUpload}
                 disabled={uploading}
-                className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 rounded-lg bg-emerald text-cream text-sm font-medium hover:bg-emerald-dark transition-colors disabled:opacity-70"
+                className="w-full min-h-[52px] inline-flex items-center justify-center gap-2 rounded-lg bg-emerald text-cream text-sm font-medium hover:bg-emerald-dark transition-colors disabled:opacity-70"
               >
                 {uploading ? (
                   <>
@@ -282,13 +291,16 @@ export default function AdminPlacementsPage() {
                 ) : (
                   <>
                     <Upload size={18} />
-                    Upload New Photo (Gallery or Camera)
+                    Take Photo or Choose from Gallery
                   </>
                 )}
               </button>
               {uploadError && (
                 <p className="mt-2 text-xs text-red-600">{uploadError}</p>
               )}
+              <p className="mt-3 text-xs text-black/40 text-center">
+                Or pick a photo you already added, below
+              </p>
             </div>
 
             <div className="overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -299,7 +311,7 @@ export default function AdminPlacementsPage() {
                 className="aspect-square rounded-lg border-2 border-dashed border-black/15 flex flex-col items-center justify-center gap-1 text-black/50 hover:border-emerald hover:text-emerald transition-colors text-xs"
               >
                 <ImageOff size={20} />
-                Clear
+                No Photo
               </button>
               {images.map((img) => (
                 <button
@@ -322,6 +334,13 @@ export default function AdminPlacementsPage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] bg-black text-cream text-sm font-medium px-5 py-3 rounded-full shadow-lg flex items-center gap-2">
+          <Check size={16} className="text-emerald" />
+          {toast}
         </div>
       )}
 

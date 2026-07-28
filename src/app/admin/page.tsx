@@ -62,18 +62,10 @@ const sections: Section[] = [
   // Content
   {
     href: "/admin/placements",
-    title: "Placements",
-    description: "Choose exactly where each uploaded photo appears on the site",
+    title: "Manage Photos",
+    description: "Add, change, or remove any photo on your website",
     icon: LayoutGrid,
     gradient: "from-black to-emerald-dark",
-    group: "Content",
-  },
-  {
-    href: "/admin/images",
-    title: "Images",
-    description: "Upload and manage site images, collections, and galleries",
-    icon: ImageIcon,
-    gradient: "from-emerald to-emerald-dark",
     group: "Content",
   },
   {
