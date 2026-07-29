@@ -4,41 +4,49 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { getPlacementMap } from "@/lib/placements";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 
 interface CollectionCard {
+  id: string;
   name: string;
-  line: string;
-  gradient: string;
-  slotKey: string;
+  tagline: string;
   photoUrl: string | null;
 }
 
-const BASE_COLLECTIONS: Omit<CollectionCard, "photoUrl">[] = [
-  { name: "Senator Wear", line: "The garment of statesmen.", gradient: "from-emerald to-emerald-dark", slotKey: "home:collections:senator-wear" },
-  { name: "Bespoke Suits", line: "A second skin in worsted wool.", gradient: "from-emerald-dark to-black", slotKey: "home:collections:bespoke-suits" },
-  { name: "Shirts", line: "Egyptian cotton. French linen.", gradient: "from-black to-emerald", slotKey: "home:collections:shirts" },
-  { name: "Casual", line: "Off-duty, never off-form.", gradient: "from-emerald-light to-emerald", slotKey: "home:collections:casual" },
-  { name: "Traditional", line: "Heritage rendered in thread.", gradient: "from-emerald to-black", slotKey: "home:collections:traditional" },
-  { name: "Corporate", line: "Authority, lined in Ankara.", gradient: "from-black to-emerald-dark", slotKey: "home:collections:corporate" },
+const FALLBACK_GRADIENTS = [
+  "from-emerald to-emerald-dark",
+  "from-emerald-dark to-black",
+  "from-black to-emerald",
+  "from-emerald-light to-emerald",
+  "from-emerald to-black",
+  "from-black to-emerald-dark",
 ];
 
 export default function CollectionsGrid() {
-  const [collections, setCollections] = useState<CollectionCard[]>(
-    BASE_COLLECTIONS.map((c) => ({ ...c, photoUrl: null }))
-  );
+  const [cards, setCards] = useState<CollectionCard[]>([]);
 
   useEffect(() => {
-    getPlacementMap(BASE_COLLECTIONS.map((c) => c.slotKey)).then((placementMap) => {
-      setCollections((prev) =>
-        prev.map((card) => ({
-          ...card,
-          photoUrl: placementMap[card.slotKey] ?? null,
+    async function loadCards() {
+      if (!isSupabaseConfigured() || !supabase) return;
+      const { data, error } = await supabase
+        .from("collection_cards")
+        .select("id, name, tagline, images(url)")
+        .order("sort_order");
+      if (error || !data) return;
+      setCards(
+        data.map((row: Record<string, unknown>) => ({
+          id: row.id as string,
+          name: (row.name as string) ?? "",
+          tagline: (row.tagline as string) ?? "",
+          photoUrl: (row.images as { url: string | null } | null)?.url ?? null,
         }))
       );
-    });
+    }
+    loadCards();
   }, []);
+
+  if (cards.length === 0) return null;
 
   return (
     <section className="py-20 md:py-32 bg-cream grain-overlay">
@@ -60,8 +68,8 @@ export default function CollectionsGrid() {
           viewport={{ once: true }}
           className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {collections.map((c) => (
-            <motion.div key={c.name} variants={staggerItem}>
+          {cards.map((c, index) => (
+            <motion.div key={c.id} variants={staggerItem}>
               <Link href="/collections" className="group block">
                 <motion.div
                   whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
@@ -71,7 +79,7 @@ export default function CollectionsGrid() {
                   <div
                     className={
                       "relative aspect-[4/3] flex items-end p-6 bg-cover bg-center " +
-                      (c.photoUrl ? "" : "bg-gradient-to-br " + c.gradient)
+                      (c.photoUrl ? "" : "bg-gradient-to-br " + FALLBACK_GRADIENTS[index % FALLBACK_GRADIENTS.length])
                     }
                     style={
                       c.photoUrl
@@ -84,9 +92,11 @@ export default function CollectionsGrid() {
                       <h3 className="font-heading text-2xl font-semibold text-cream">
                         {c.name}
                       </h3>
-                      <p className="mt-1 font-heading text-sm italic text-cream/80">
-                        {c.line}
-                      </p>
+                      {c.tagline && (
+                        <p className="mt-1 font-heading text-sm italic text-cream/80">
+                          {c.tagline}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="p-5 flex items-center justify-between">
