@@ -61,6 +61,14 @@ const sections: Section[] = [
   },
   // Content
   {
+    href: "/admin/homepage-sections",
+    title: "Homepage Layout",
+    description: "Add, remove, and reorder your hero slides and collection cards",
+    icon: LayoutGrid,
+    gradient: "from-emerald to-black",
+    group: "Content",
+  },
+  {
     href: "/admin/placements",
     title: "Manage Photos",
     description: "Add, change, or remove any photo on your website",
