@@ -14,7 +14,11 @@ import {
   type CollectionItem,
 } from "@/data/collections";
 import { addItem, getItems } from "@/lib/inquiry-store";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getPlacementMap } from "@/lib/placements";
+
+function slotKeyFor(itemId: string): string {
+  return "collections:" + itemId;
+}
 
 export default function CollectionsPage() {
   const [filter, setFilter] = useState<Category | "All">("All");
@@ -26,29 +30,15 @@ export default function CollectionsPage() {
   const [photoMap, setPhotoMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    async function loadPhotos() {
-      if (!isSupabaseConfigured() || !supabase) return;
-      const { data, error } = await supabase
-        .from("images")
-        .select("name, url")
-        .eq("category", "collections");
-      if (error || !data) return;
-
+    const slotKeys = COLLECTION_ITEMS.map((item) => slotKeyFor(item.id));
+    getPlacementMap(slotKeys).then((placementMap) => {
       const map: Record<string, string> = {};
       for (const item of COLLECTION_ITEMS) {
-        const match = data.find(
-          (row) =>
-            row.url &&
-            typeof row.name === "string" &&
-            row.name.trim().toLowerCase() === item.name.trim().toLowerCase()
-        );
-        if (match?.url) {
-          map[item.id] = match.url;
-        }
+        const url = placementMap[slotKeyFor(item.id)];
+        if (url) map[item.id] = url;
       }
       setPhotoMap(map);
-    }
-    loadPhotos();
+    });
   }, []);
 
   const visible = useMemo(() => {
@@ -188,15 +178,7 @@ export default function CollectionsPage() {
                       {item.description}
                     </p>
                     <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-                      
-                      <a
-                        href={`https://wa.me/2349131272407?text=${encodeURIComponent(
-                          `Hello! I'm interested in "${item.name}" from your ${item.category} collection.`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-emerald px-4 py-2.5 text-[10px] font-medium uppercase tracking-[0.22em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px]"
-                      >
+                      <a href={`https://wa.me/2349131272407?text=${encodeURIComponent(`Hello! I'm interested in "${item.name}" from your ${item.category} collection.`)}`} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-emerald px-4 py-2.5 text-[10px] font-medium uppercase tracking-[0.22em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px]">
                         Order on WhatsApp
                         <ArrowRight size={12} />
                       </a>
@@ -259,10 +241,7 @@ export default function CollectionsPage() {
               Submit your measurements online so we can craft your perfect fit.
             </p>
           </div>
-          <Link
-            href="/measurements"
-            className="inline-flex items-center gap-2 rounded-full bg-emerald px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px] whitespace-nowrap"
-          >
+          <Link href="/measurements" className="inline-flex items-center gap-2 rounded-full bg-emerald px-6 py-3 text-xs font-medium uppercase tracking-[0.22em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px] whitespace-nowrap">
             Submit Measurements <ArrowRight size={12} />
           </Link>
         </motion.div>

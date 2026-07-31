@@ -3,23 +3,15 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Quote, Star } from "lucide-react";
-import {
-  DEFAULT_TESTIMONIALS,
-  getTestimonials,
-  subscribeTestimonials,
-  type Testimonial,
-} from "@/lib/testimonials-store";
+import { getTestimonials, type Testimonial } from "@/lib/testimonials-store";
 
 export default function TestimonialsSection() {
-  const [items, setItems] = useState<Testimonial[]>(DEFAULT_TESTIMONIALS);
+  const [items, setItems] = useState<Testimonial[]>([]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
-    setItems(getTestimonials());
-    return subscribeTestimonials((next) => setItems(next));
+    getTestimonials().then(setItems);
   }, []);
 
-  // Hide the entire section until the owner has added real testimonials.
   if (items.length === 0) return null;
 
   return (

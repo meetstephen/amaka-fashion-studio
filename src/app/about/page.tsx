@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Award, Gem, Quote, Scissors, Star } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import NewsletterCTA from "@/components/NewsletterCTA";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getPlacementMap } from "@/lib/placements";
 import {
   fadeInUp,
   fadeInLeft,
@@ -41,24 +41,15 @@ const values = [
   },
 ];
 
+const OWNER_PHOTO_SLOT = "about:owner-photo";
+
 export default function AboutPage() {
   const [ownerPhotoUrl, setOwnerPhotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadOwnerPhoto() {
-      if (!isSupabaseConfigured() || !supabase) return;
-      const { data, error } = await supabase
-        .from("images")
-        .select("url")
-        .eq("category", "about")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!error && data?.url) {
-        setOwnerPhotoUrl(data.url);
-      }
-    }
-    loadOwnerPhoto();
+    getPlacementMap([OWNER_PHOTO_SLOT]).then((map) => {
+      setOwnerPhotoUrl(map[OWNER_PHOTO_SLOT] ?? null);
+    });
   }, []);
 
   return (

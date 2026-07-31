@@ -2,59 +2,77 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Quote, Plus, Trash2, Save, Star } from "lucide-react";
+import { Quote, Plus, Trash2, Save, Star, Loader2 } from "lucide-react";
 import {
-  DEFAULT_TESTIMONIALS,
+  addTestimonial,
+  deleteTestimonial,
   getTestimonials,
-  saveTestimonials,
+  updateTestimonial,
   type Testimonial,
 } from "@/lib/testimonials-store";
 
 export default function AdminTestimonialsPage() {
   const [items, setItems] = useState<Testimonial[]>([]);
-  const [draft, setDraft] = useState<Testimonial>({
-    id: "",
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Omit<Testimonial, "id">>({
     name: "",
     location: "",
     quote: "",
     rating: 5,
   });
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydrate from localStorage
-    setItems(getTestimonials());
-  }, []);
-
-  const handleAdd = () => {
-    if (!draft.name.trim() || !draft.quote.trim()) return;
-    const next: Testimonial = {
-      ...draft,
-      id: crypto.randomUUID(),
-    };
-    const updated = [next, ...items];
-    setItems(updated);
-    saveTestimonials(updated);
-    setDraft({ id: "", name: "", location: "", quote: "", rating: 5 });
+  const showToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 2000);
   };
 
-  const handleDelete = (id: string) => {
-    const updated = items.filter((t) => t.id !== id);
-    setItems(updated);
-    saveTestimonials(updated);
+  const load = async () => {
+    setLoading(true);
+    const data = await getTestimonials();
+    setItems(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const handleAdd = async () => {
+    if (!draft.name.trim() || !draft.quote.trim()) return;
+    const created = await addTestimonial(draft);
+    if (created) {
+      setItems((prev) => [created, ...prev]);
+      setDraft({ name: "", location: "", quote: "", rating: 5 });
+      showToast("Testimonial added.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const ok = await deleteTestimonial(id);
+    if (ok) {
+      setItems((prev) => prev.filter((t) => t.id !== id));
+      showToast("Testimonial deleted.");
+    }
   };
 
   const handleUpdate = (id: string, patch: Partial<Testimonial>) => {
-    const updated = items.map((t) => (t.id === id ? { ...t, ...patch } : t));
-    setItems(updated);
+    setItems((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   };
 
-  const handleSaveAll = () => {
-    saveTestimonials(items);
-  };
-
-  const handleResetDefaults = () => {
-    setItems(DEFAULT_TESTIMONIALS);
-    saveTestimonials(DEFAULT_TESTIMONIALS);
+  const handleSaveAll = async () => {
+    setSaving(true);
+    for (const t of items) {
+      await updateTestimonial(t.id, {
+        name: t.name,
+        location: t.location,
+        quote: t.quote,
+        rating: t.rating,
+      });
+    }
+    setSaving(false);
+    showToast("All changes saved.");
   };
 
   return (
@@ -69,24 +87,16 @@ export default function AdminTestimonialsPage() {
             Words from clients - shown on the homepage testimonials grid.
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleSaveAll}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px]"
-          >
-            <Save size={14} />
-            Save all
-          </button>
-          <button
-            onClick={handleResetDefaults}
-            className="inline-flex items-center rounded-lg border border-black/15 px-4 py-2 text-xs uppercase tracking-[0.2em] text-black/60 hover:bg-black/5 transition-colors min-h-[44px]"
-          >
-            Reset
-          </button>
-        </div>
+        <button
+          onClick={handleSaveAll}
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-cream hover:bg-emerald-dark transition-colors min-h-[44px] disabled:opacity-70"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          Save all changes
+        </button>
       </div>
 
-      {/* Add form */}
       <div className="rounded-2xl border border-emerald/10 bg-white p-5 shadow-sm mb-6">
         <h3 className="font-heading text-lg font-semibold text-black mb-4">Add new</h3>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -141,9 +151,9 @@ export default function AdminTestimonialsPage() {
         </div>
       </div>
 
-      {/* List */}
       <div className="space-y-4">
-        {items.length === 0 && (
+        {loading && <p className="text-sm text-black/55">Loading testimonials...</p>}
+        {!loading && items.length === 0 && (
           <p className="text-sm text-black/55">No testimonials yet.</p>
         )}
         {items.map((t) => (
@@ -163,9 +173,7 @@ export default function AdminTestimonialsPage() {
                 <input
                   type="text"
                   value={t.location}
-                  onChange={(e) =>
-                    handleUpdate(t.id, { location: e.target.value })
-                  }
+                  onChange={(e) => handleUpdate(t.id, { location: e.target.value })}
                   className="min-h-[44px] rounded-lg border border-black/10 px-3 text-sm text-black/70 focus:border-emerald focus:ring-1 focus:ring-emerald outline-none"
                   autoComplete="off"
                 />
@@ -207,6 +215,12 @@ export default function AdminTestimonialsPage() {
           </div>
         ))}
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] bg-black text-cream text-sm font-medium px-5 py-3 rounded-full shadow-lg">
+          {toast}
+        </div>
+      )}
 
       <div className="mt-8">
         <Link
