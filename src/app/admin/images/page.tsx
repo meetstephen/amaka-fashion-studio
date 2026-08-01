@@ -23,6 +23,20 @@ const SEED_DEFINITIONS = [
   { name: "Gold Embroidery Detail", category: "featured", gradient: "bg-gradient-to-br from-amber-100 via-yellow-200 to-emerald/30" },
 ];
 
+function extractStoragePath(url: string): string | null {
+  const marker = "/storage/v1/object/public/images/";
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length);
+}
+
+async function deleteStorageFile(url: string | null) {
+  if (!url) return;
+  const path = extractStoragePath(url);
+  if (!path) return;
+  await supabase.storage.from("images").remove([path]);
+}
+
 export default function AdminImagesPage() {
   const [images, setImages] = useState<ImageRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -108,11 +122,18 @@ export default function AdminImagesPage() {
         const newUrl: string | null = typeof data.url === "string" ? data.url : null;
 
         if (targetId !== null) {
+          const oldImage = images?.find((i) => i.id === targetId);
+          const oldUrl = oldImage?.url ?? null;
+
           const { error } = await supabase
             .from("images")
             .update({ url: newUrl })
             .eq("id", targetId);
           if (error) throw new Error("Saved file but failed to update database: " + error.message);
+
+          if (oldUrl && oldUrl !== newUrl) {
+            void deleteStorageFile(oldUrl);
+          }
         } else {
           const { error } = await supabase.from("images").insert({
             name: file.name.replace(/\.[^/.]+$/, ""),
@@ -133,7 +154,7 @@ export default function AdminImagesPage() {
         setReplaceTargetId(null);
       }
     },
-    [loadImages]
+    [loadImages, images]
   );
 
   useEffect(() => {
@@ -185,6 +206,7 @@ export default function AdminImagesPage() {
   };
 
   const handleDelete = async (id: string) => {
+    const target = images?.find((i) => i.id === id);
     const { error } = await supabase.from("images").delete().eq("id", id);
     if (error) {
       setUploadError("Failed to delete: " + error.message);
@@ -192,6 +214,9 @@ export default function AdminImagesPage() {
       return;
     }
     setDeleteConfirmId(null);
+    if (target?.url) {
+      void deleteStorageFile(target.url);
+    }
     await loadImages();
   };
 
