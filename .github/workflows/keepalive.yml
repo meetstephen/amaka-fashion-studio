@@ -1,11 +1,32 @@
 name: Supabase Keep-Alive
+
 on:
   schedule:
-    - cron: "0 6 */3 * *"
+    # Supabase Free projects need regular database activity. Spread requests across
+    # the day to avoid GitHub's top-of-hour schedule congestion.
+    - cron: "17 6 * * *"
+    - cron: "41 14 * * *"
+    - cron: "53 22 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keep-alive
+  cancel-in-progress: false
+
 jobs:
   ping:
+    name: Keep Supabase active
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Ping keep-alive endpoint
-        run: curl -f https://amaka-fashion-atelier.vercel.app/api/keepalive
+      - name: Query the keep-alive endpoint
+        env:
+          KEEPALIVE_URL: https://amaka-fashion-atelier.vercel.app/api/keepalive
+        run: |
+          curl --fail --silent --show-error \
+            --retry 3 --retry-delay 5 --retry-all-errors \
+            --connect-timeout 10 --max-time 30 \
+            "$KEEPALIVE_URL"
