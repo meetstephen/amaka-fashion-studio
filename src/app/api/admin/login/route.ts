@@ -46,8 +46,9 @@ function clearFailures(ip: string): void {
 
 export async function POST(request: Request) {
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+  const sessionSecret = process.env.SESSION_SECRET;
 
-  if (!passwordHash) {
+  if (!passwordHash || !sessionSecret || sessionSecret.length < 32) {
     return NextResponse.json(
       { success: false, error: "Server configuration error" },
       { status: 500 }
@@ -104,8 +105,7 @@ export async function POST(request: Request) {
     clearFailures(ip);
 
     // Create a signed session token
-    const secret = process.env.SESSION_SECRET || "default-dev-secret";
-    const sessionToken = await createSessionToken(secret);
+    const sessionToken = await createSessionToken(sessionSecret);
 
     const cookieStore = await cookies();
     cookieStore.set("admin_session", sessionToken, {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 interface FeaturedData {
@@ -52,10 +53,12 @@ export default function FeaturedSection() {
         >
           {/* Image or gradient fallback */}
           {data.image_url ? (
-            <img
+            <Image
               src={data.image_url}
               alt={data.title}
-              className="absolute inset-0 h-full w-full object-cover"
+              fill
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              className="object-cover"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-emerald via-emerald-dark to-black" />

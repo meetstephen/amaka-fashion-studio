@@ -138,9 +138,17 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-cream text-black">
+        <a
+          href="#main-content"
+          className="fixed left-4 top-4 z-[200] -translate-y-24 rounded-full bg-gold px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-black shadow-xl transition-transform focus:translate-y-0"
+        >
+          Skip to content
+        </a>
         <AnnouncementBar />
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" tabIndex={-1} className="flex-1">
+          {children}
+        </main>
         <Footer />
         <ScrollProgress />
         <ChatBot />

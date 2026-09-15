@@ -23,8 +23,17 @@ const FALLBACK_GRADIENTS = [
   "from-black to-emerald-dark",
 ];
 
+const FALLBACK_CARDS: CollectionCard[] = [
+  { id: "senator", name: "Senator Wear", tagline: "The garment of statesmen.", photoUrl: null },
+  { id: "suits", name: "Bespoke Suits", tagline: "A second skin in worsted wool.", photoUrl: null },
+  { id: "shirts", name: "Shirts", tagline: "Egyptian cotton. French linen.", photoUrl: null },
+  { id: "casual", name: "Casual", tagline: "Off-duty, never off-form.", photoUrl: null },
+  { id: "traditional", name: "Traditional", tagline: "Heritage rendered in thread.", photoUrl: null },
+  { id: "corporate", name: "Corporate", tagline: "Authority, lined in Ankara.", photoUrl: null },
+];
+
 export default function CollectionsGrid() {
-  const [cards, setCards] = useState<CollectionCard[]>([]);
+  const [cards, setCards] = useState<CollectionCard[]>(FALLBACK_CARDS);
 
   useEffect(() => {
     async function loadCards() {
@@ -33,7 +42,7 @@ export default function CollectionsGrid() {
         .from("collection_cards")
         .select("id, name, tagline, images(url)")
         .order("sort_order");
-      if (error || !data) return;
+      if (error || !data || data.length === 0) return;
       setCards(
         data.map((row: Record<string, unknown>) => ({
           id: row.id as string,
@@ -45,8 +54,6 @@ export default function CollectionsGrid() {
     }
     loadCards();
   }, []);
-
-  if (cards.length === 0) return null;
 
   return (
     <section className="py-20 md:py-32 bg-cream grain-overlay">

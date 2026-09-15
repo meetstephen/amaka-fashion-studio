@@ -95,7 +95,13 @@ export default function AdminImagesPage() {
   }, []);
 
   useEffect(() => {
-    loadImages();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) return loadImages();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [loadImages]);
 
   const processFile = useCallback(

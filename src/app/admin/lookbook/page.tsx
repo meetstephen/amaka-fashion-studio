@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Upload, Trash2, Plus, Camera, Check } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadImage, deleteImage } from "@/lib/upload";
 
@@ -318,15 +319,17 @@ export default function AdminLookbookPage() {
             className="bg-white rounded-xl border border-emerald/10 overflow-hidden shadow-sm"
           >
             {/* Thumbnail with always-visible "Tap to replace" badge */}
-            <div className="relative">
+            <div className="relative aspect-[4/3]">
               {item.image_url ? (
-                <img
+                <Image
                   src={item.image_url}
                   alt={item.title}
-                  className="aspect-[4/3] w-full object-cover"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                  className="object-cover"
                 />
               ) : (
-                <div className={`aspect-[4/3] ${item.gradient}`} />
+                <div className={`absolute inset-0 ${item.gradient}`} />
               )}
 
               {/* Bottom gradient overlay so badge always has contrast */}

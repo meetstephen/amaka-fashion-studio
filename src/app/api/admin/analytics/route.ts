@@ -14,7 +14,10 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const secret = process.env.SESSION_SECRET || "default-dev-secret";
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+  }
   const valid = await verifySessionToken(session, secret);
   if (!valid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

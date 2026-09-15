@@ -36,7 +36,13 @@ export default function AdminTestimonialsPage() {
   };
 
   useEffect(() => {
-    load();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) return load();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleAdd = async () => {
