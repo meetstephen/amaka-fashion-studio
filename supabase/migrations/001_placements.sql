@@ -70,23 +70,29 @@ ON CONFLICT (slot_key) DO NOTHING;
 -- the moment this migration runs. One-time only.
 -- ============================================================
 
-UPDATE public.placements p SET image_id = i.id, updated_at = now()
-FROM public.images i
-WHERE p.slot_key = 'home:hero:heritage' AND p.image_id IS NULL
-  AND i.category = 'hero' AND i.name ILIKE '%heritage%' AND i.url IS NOT NULL
-ORDER BY i.created_at DESC LIMIT 1;
+UPDATE public.placements p SET image_id = sub.id, updated_at = now()
+FROM (
+  SELECT id FROM public.images
+  WHERE category = 'hero' AND name ILIKE '%heritage%' AND url IS NOT NULL
+  ORDER BY created_at DESC LIMIT 1
+) sub
+WHERE p.slot_key = 'home:hero:heritage' AND p.image_id IS NULL;
 
-UPDATE public.placements p SET image_id = i.id, updated_at = now()
-FROM public.images i
-WHERE p.slot_key = 'home:hero:senator' AND p.image_id IS NULL
-  AND i.category = 'hero' AND i.name ILIKE '%senator%' AND i.url IS NOT NULL
-ORDER BY i.created_at DESC LIMIT 1;
+UPDATE public.placements p SET image_id = sub.id, updated_at = now()
+FROM (
+  SELECT id FROM public.images
+  WHERE category = 'hero' AND name ILIKE '%senator%' AND url IS NOT NULL
+  ORDER BY created_at DESC LIMIT 1
+) sub
+WHERE p.slot_key = 'home:hero:senator' AND p.image_id IS NULL;
 
-UPDATE public.placements p SET image_id = i.id, updated_at = now()
-FROM public.images i
-WHERE p.slot_key = 'home:hero:wedding' AND p.image_id IS NULL
-  AND i.category = 'hero' AND i.name ILIKE '%wedding%' AND i.url IS NOT NULL
-ORDER BY i.created_at DESC LIMIT 1;
+UPDATE public.placements p SET image_id = sub.id, updated_at = now()
+FROM (
+  SELECT id FROM public.images
+  WHERE category = 'hero' AND name ILIKE '%wedding%' AND url IS NOT NULL
+  ORDER BY created_at DESC LIMIT 1
+) sub
+WHERE p.slot_key = 'home:hero:wedding' AND p.image_id IS NULL;
 
 UPDATE public.placements p SET image_id = sub.id, updated_at = now()
 FROM (
