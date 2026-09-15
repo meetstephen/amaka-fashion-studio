@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import Image from "next/image";
 
 interface LightboxItem {
   id: number;
@@ -29,6 +30,9 @@ export default function Lightbox({
 }: LightboxProps) {
   const item = items[currentIndex];
   const [scale, setScale] = useState(1);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const pinchRef = useRef<{ initialDist: number; initialScale: number } | null>(
     null
   );
@@ -41,7 +45,38 @@ export default function Lightbox({
 
   // Keyboard navigation
   useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
+    };
+  }, []);
+
+  // Keyboard navigation and a contained focus loop keep the modal usable
+  // without a pointer.
+  useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Tab") {
+        const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable?.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+        return;
+      }
+
       switch (e.key) {
         case "Escape":
           onClose();
@@ -140,11 +175,13 @@ export default function Lightbox({
           role="dialog"
           aria-modal="true"
           aria-label={`Lightbox: ${item.title}`}
+          ref={dialogRef}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={onClose}
         >
           {/* Close button */}
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             aria-label="Close lightbox"
             className="absolute top-4 right-4 z-[110] grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-full bg-white/10 text-cream transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
@@ -234,10 +271,12 @@ export default function Lightbox({
               className={`absolute inset-0 ${item.image_url ? '' : item.gradient}`}
             >
               {item.image_url && (
-                <img
+                <Image
                   src={item.image_url}
                   alt={item.title}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 90vw, 768px"
+                  className="object-cover"
                 />
               )}
             </motion.div>

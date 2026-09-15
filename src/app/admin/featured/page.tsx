@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Upload, Save, Check, Trash2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadImage } from "@/lib/upload";
 
@@ -215,16 +216,18 @@ export default function AdminFeaturedPage() {
         {/* Live preview */}
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-black">Live Preview</h3>
-          <div className="relative rounded-xl overflow-hidden shadow-lg">
+          <div className="relative aspect-[16/9] rounded-xl overflow-hidden shadow-lg">
             {/* Featured image or gradient placeholder */}
             {imageUrl ? (
-              <img
+              <Image
                 src={imageUrl}
                 alt="Featured preview"
-                className="aspect-[16/9] w-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
               />
             ) : (
-              <div className="aspect-[16/9] bg-gradient-to-br from-emerald via-emerald-dark to-black" />
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald via-emerald-dark to-black" />
             )}
             {/* Overlay */}
             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-6">

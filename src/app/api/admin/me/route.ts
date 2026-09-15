@@ -16,7 +16,10 @@ export async function GET() {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 
-  const secret = process.env.SESSION_SECRET || "default-dev-secret";
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    return NextResponse.json({ authenticated: false }, { status: 503 });
+  }
   const valid = await verifySessionToken(session, secret);
 
   if (!valid) {

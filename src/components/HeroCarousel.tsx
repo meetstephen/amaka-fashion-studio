@@ -22,9 +22,56 @@ interface HeroSlide {
 
 const ROTATE_MS = 6000;
 const FALLBACK_GRADIENT = "from-emerald via-emerald-dark to-black";
+const FALLBACK_SLIDES: HeroSlide[] = [
+  {
+    id: "heritage",
+    eyebrow: "Where Heritage Meets Distinction",
+    title: "Made to hold a room",
+    subtitle:
+      "Bespoke menswear from Abakaliki—hand-finished, deeply rooted, and cut for the modern Nigerian gentleman.",
+    cta_label: "Explore Collections",
+    cta_href: "/collections",
+    secondary_label: "Book a Consultation",
+    secondary_href:
+      "https://wa.me/2349131272407?text=Hello%20Amaka%20Fashion%20Atelier%2C%20I%27d%20like%20to%20book%20a%20consultation",
+    fabric_name: "Italian Wool",
+    fabric_origin: "Cut & finished in Abakaliki",
+    photoUrl: null,
+  },
+  {
+    id: "senator",
+    eyebrow: "The Senator House",
+    title: "Quiet authority, precisely cut",
+    subtitle:
+      "An exacting silhouette, considered details, and a finish that speaks before introductions are made.",
+    cta_label: "View Senator Wear",
+    cta_href: "/collections",
+    secondary_label: "Speak to a Stylist",
+    secondary_href:
+      "https://wa.me/2349131272407?text=Hello%2C%20I%27d%20like%20to%20discuss%20a%20Senator%20piece",
+    fabric_name: "Aso-Oke",
+    fabric_origin: "Hand-woven · Nigeria",
+    photoUrl: null,
+  },
+  {
+    id: "wedding",
+    eyebrow: "The Wedding House",
+    title: "An heirloom in the making",
+    subtitle:
+      "From first fitting to final buttonhole, every wedding piece is composed around the man, the moment, and the legacy.",
+    cta_label: "Begin a Wedding Suite",
+    cta_href:
+      "https://wa.me/2349131272407?text=Hello%21%20I%27d%20like%20to%20begin%20a%20wedding%20suite",
+    secondary_label: "View the Lookbook",
+    secondary_href: "/lookbook",
+    fabric_name: "Bullion Gold",
+    fabric_origin: "Hand-laid detail",
+    photoUrl: null,
+  },
+];
 
 export default function HeroCarousel() {
-  const [slides, setSlides] = useState<HeroSlide[] | null>(null);
+  const [slides, setSlides] = useState<HeroSlide[]>(FALLBACK_SLIDES);
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const startX = useRef<number | null>(null);
@@ -38,7 +85,7 @@ export default function HeroCarousel() {
           "id, eyebrow, title, subtitle, cta_label, cta_href, secondary_label, secondary_href, fabric_name, fabric_origin, images(url)"
         )
         .order("sort_order");
-      if (error || !data) return;
+      if (error || !data || data.length === 0) return;
       setSlides(
         data.map((row: Record<string, unknown>) => ({
           id: row.id as string,
@@ -59,7 +106,7 @@ export default function HeroCarousel() {
   }, []);
 
   useEffect(() => {
-    if (paused || !slides || slides.length < 2) return;
+    if (paused || slides.length < 2) return;
     const t = window.setInterval(() => {
       setActive((i) => (i + 1) % slides.length);
     }, ROTATE_MS);
@@ -71,7 +118,7 @@ export default function HeroCarousel() {
     setPaused(true);
   };
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (startX.current == null || !slides) return;
+    if (startX.current == null) return;
     const dx = e.changedTouches[0].clientX - startX.current;
     if (Math.abs(dx) > 50) {
       if (dx < 0) setActive((i) => (i + 1) % slides.length);
@@ -80,18 +127,6 @@ export default function HeroCarousel() {
     startX.current = null;
     setPaused(false);
   };
-
-  if (!slides || slides.length === 0) {
-    return (
-      <section className="relative isolate min-h-[100svh] flex items-center overflow-hidden grain-overlay bg-gradient-to-br from-emerald via-emerald-dark to-black">
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 className="font-heading text-5xl md:text-7xl font-semibold text-cream">
-            Amaka Fashion Atelier
-          </h1>
-        </div>
-      </section>
-    );
-  }
 
   const slide = slides[active];
 

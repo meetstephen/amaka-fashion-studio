@@ -75,7 +75,13 @@ export default function AdminPlacementsPage() {
   }, []);
 
   useEffect(() => {
-    loadAll();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) return loadAll();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [loadAll]);
 
   const grouped = useMemo(() => {

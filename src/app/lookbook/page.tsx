@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import BackButton from "@/components/BackButton";
 import Lightbox from "@/components/Lightbox";
 import { staggerContainer, staggerItem } from "@/lib/animations";
@@ -128,10 +129,12 @@ export default function LookbookPage() {
               <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
                 {/* Show uploaded image or gradient fallback */}
                 {item.image_url ? (
-                  <img
+                  <Image
                     src={item.image_url}
                     alt={item.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
                   <div
